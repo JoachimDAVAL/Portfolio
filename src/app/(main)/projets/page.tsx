@@ -55,7 +55,7 @@ function ProjectCard({ projet }: { projet: Projet }) {
   const titreDisplay = useTextScramble(projet.titre,           rectoRevealed, 4)
   const typeDisplay  = useTextScramble(projet.type,            rectoRevealed, 10)
   const anneeDisplay = useTextScramble(projet.annee,           rectoRevealed, 14)
-  const descDisplay  = useTextScramble(projet.description,     versoRevealed)
+  const descDisplay  = useTextScramble(projet.description,     versoRevealed, 0, 5)
   const stackDisplay = useTextScramble(projet.stack.join(' . '), versoRevealed, 20)
 
   return (
@@ -94,7 +94,7 @@ export default function ProjetsPage() {
         style={{ backgroundImage: "url('/images/lain.webp')" }}
       />
 
-      <h1 className="lg:absolute lg:left-4 lg:top-1/2 lg:-translate-y-1/2 lg:-rotate-90 lg:whitespace-nowrap font-title tracking-widest uppercase text-7xl md:text-8xl lg:text-9xl">
+      <h1 className="mt-16 lg:mt-0 lg:absolute lg:left-4 lg:top-1/2 lg:-translate-y-1/2 lg:-rotate-90 lg:whitespace-nowrap font-title tracking-widest uppercase text-7xl md:text-8xl lg:text-9xl">
         Projets
       </h1>
 
