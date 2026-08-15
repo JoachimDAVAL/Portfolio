@@ -90,7 +90,7 @@ export default function ProjetsPage() {
   return (
     <main className="relative flex flex-col lg:flex-row items-center justify-center min-h-screen gap-6 lg:gap-0">
       <div
-        className="absolute right-0 top-1/2 -translate-y-1/2 w-3/4 md:w-2/3 lg:w-1/2 h-full bg-contain bg-no-repeat bg-center opacity-40"
+        className="fixed right-0 top-1/2 -translate-y-1/2 w-3/4 md:w-2/3 lg:w-1/2 h-full bg-contain bg-no-repeat bg-center opacity-40"
         style={{ backgroundImage: "url('/images/lain.webp')" }}
       />
 
