@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Portfolio — Joachim Daval
 
-## Getting Started
+Portfolio personnel développeur fullstack & webmaster.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Framework** : Next.js 15 (App Router)
+- **UI** : React 19, TypeScript, Tailwind CSS v4
+- **Fonts** : BD Plakatbau (titres) + Chainprinter (corps) via Adobe Fonts
+- **Déploiement** : Vercel
+
+## Structure
+
+```
+src/app/
+├── layout.tsx              # Layout racine (fonts, metadata)
+├── page.tsx                # Page d'entrée — vidéo + bouton ENTER
+└── (main)/
+    ├── layout.tsx          # Navbar avec underline animé
+    ├── about/page.tsx      # Grid 4 sections (hero, à propos, formation, stack)
+    ├── projets/page.tsx    # 3 cards avec effet flip au hover
+    └── contact/page.tsx    # Vidéo + liens (email, GitHub, LinkedIn, CV)
+
+src/hooks/
+└── useTextScramble.ts      # Hook d'effet scramble text (rAF)
+
+public/
+├── images/                 # Photos et illustrations
+├── videos/                 # Vidéos de fond (WebM + MP4)
+└── DAVALjoachim_CV.pdf
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Fonctionnalités
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Text scramble** : effet de déchiffrement sur tous les textes au chargement et au hover
+- **Cards projets** : flip recto/verso au hover avec scramble indépendant par face
+- **Navbar** : underline qui suit la souris entre les liens
+- **Vidéos de fond** : page d'entrée et contact
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Design system
 
-## Learn More
+| Élément     | Valeur                             |
+| ----------- | ---------------------------------- |
+| Fond        | `#141414`                          |
+| Texte       | `rgb(226, 206, 202)` (crème)       |
+| Font titres | `BD Plakatbau`                     |
+| Font corps  | `Chainprinter`                     |
+| H1          | `text-7xl md:text-8xl lg:text-9xl` |
+| Sous-titres | `text-5xl lg:text-6xl`             |
+| H2 sections | `text-4xl md:text-5xl lg:text-6xl` |
+| Corps       | `text-sm min-[1700px]:text-base`   |
 
-To learn more about Next.js, take a look at the following resources:
+## Lancer le projet
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Ouvrir [http://localhost:3000](http://localhost:3000).
