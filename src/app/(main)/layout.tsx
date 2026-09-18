@@ -27,11 +27,20 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const displayedIndex = hovered ?? activeIndex
 
   useEffect(() => {
-    if (displayedIndex !== -1 && linkRefs.current[displayedIndex] && navRef.current) {
-      const navRect = navRef.current.getBoundingClientRect()
-      const elRect  = linkRefs.current[displayedIndex]!.getBoundingClientRect()
-      setUnderline({ left: elRect.left - navRect.left, width: elRect.width })
+    const recalculate = () => {
+      if (displayedIndex !== -1 && linkRefs.current[displayedIndex] && navRef.current) {
+        const navRect = navRef.current.getBoundingClientRect()
+        const elRect  = linkRefs.current[displayedIndex]!.getBoundingClientRect()
+        setUnderline({ left: elRect.left - navRect.left, width: elRect.width })
+      }
     }
+
+    recalculate()
+
+    const observer = new ResizeObserver(recalculate)
+    linkRefs.current.forEach(link => { if (link) observer.observe(link) })
+
+    return () => observer.disconnect()
   }, [displayedIndex])
 
   return (
