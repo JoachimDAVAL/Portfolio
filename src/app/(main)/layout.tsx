@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { useTextScramble } from '@/hooks/useTextScramble'
 
@@ -15,18 +16,23 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const contactDisplay = useTextScramble('Contact', mounted, 8)
   const displays = [aboutDisplay, projetsDisplay, contactDisplay]
 
+  const pathname = usePathname()
+  const activeIndex = hrefs.findIndex(href => href === pathname)
+
   const [hovered, setHovered] = useState<number | null>(null)
   const navRef  = useRef<HTMLElement>(null)
   const linkRefs = useRef<(HTMLAnchorElement | null)[]>([])
   const [underline, setUnderline] = useState({ left: 0, width: 0 })
 
+  const displayedIndex = hovered ?? activeIndex
+
   useEffect(() => {
-    if (hovered !== null && linkRefs.current[hovered] && navRef.current) {
+    if (displayedIndex !== -1 && linkRefs.current[displayedIndex] && navRef.current) {
       const navRect = navRef.current.getBoundingClientRect()
-      const elRect  = linkRefs.current[hovered]!.getBoundingClientRect()
+      const elRect  = linkRefs.current[displayedIndex]!.getBoundingClientRect()
       setUnderline({ left: elRect.left - navRect.left, width: elRect.width })
     }
-  }, [hovered])
+  }, [displayedIndex])
 
   return (
     <>
@@ -46,8 +52,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           className="absolute bottom-0 left-0 h-px bg-current pointer-events-none transition-all duration-200"
           style={{
             transform: `translateX(${underline.left}px)`,
-            width: hovered !== null ? underline.width : 0,
-            opacity: hovered !== null ? 1 : 0,
+            width: displayedIndex !== -1 ? underline.width : 0,
+            opacity: displayedIndex !== -1 ? 1 : 0,
           }}
         />
       </nav>

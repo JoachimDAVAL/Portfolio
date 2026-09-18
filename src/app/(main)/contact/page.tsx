@@ -19,11 +19,10 @@ export default function ContactPage() {
   return (
     <main className="flex items-center justify-center min-h-screen">
 
-      <video className="fixed inset-0 w-full h-full object-cover -z-10" autoPlay muted loop playsInline>
+      <video className="fixed inset-0 w-full h-full object-cover -z-10 opacity-30" autoPlay muted loop playsInline>
         <source src="https://res.cloudinary.com/ln8fnpns/video/upload/v1789733407/contact.webm" type="video/webm" />
         <source src="https://res.cloudinary.com/ln8fnpns/video/upload/v1789733407/contact.mp4" type="video/mp4" />
       </video>
-      <div className="fixed inset-0 bg-black/50 -z-10" />
 
       <section className="flex flex-col items-center gap-12 w-[90%] md:w-[40%] max-w-2xl">
         <h1 className="font-title uppercase tracking-widest text-7xl md:text-8xl lg:text-9xl text-center">{titleDisplay}</h1>
