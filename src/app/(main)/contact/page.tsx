@@ -20,8 +20,8 @@ export default function ContactPage() {
     <main className="flex items-center justify-center min-h-screen">
 
       <video className="fixed inset-0 w-full h-full object-cover -z-10" autoPlay muted loop playsInline>
-        <source src="/videos/contact.webm" type="video/webm" />
-        <source src="/videos/contact.mp4" type="video/mp4" />
+        <source src="https://res.cloudinary.com/ln8fnpns/video/upload/v1789733407/contact.webm" type="video/webm" />
+        <source src="https://res.cloudinary.com/ln8fnpns/video/upload/v1789733407/contact.mp4" type="video/mp4" />
       </video>
       <div className="fixed inset-0 bg-black/50 -z-10" />
 

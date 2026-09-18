@@ -17,6 +17,7 @@ export default function RootLayout({
     <html lang="fr">
       <head>
         <link rel="stylesheet" href="https://use.typekit.net/ttq6oku.css" />
+        <link rel="icon" href="/favicon.webp" type="image/webp" />
       </head>
       <body>
         {children}
