@@ -66,7 +66,7 @@ export default function AboutPage() {
         {/* Hero */}
         <section
           className="bg-cover bg-center flex flex-col justify-center py-12 md:py-0"
-          style={{ backgroundImage: "url('https://res.cloudinary.com/ln8fnpns/image/upload/v1789733263/me.webp')" }}
+          style={{ backgroundImage: "url('https://res.cloudinary.com/ln8fnpns/image/upload/f_auto,q_auto/v1789733263/me.webp')" }}
         >
           <h1 className="font-title uppercase tracking-widest text-7xl md:text-8xl lg:text-9xl flex flex-col">
             <span>{prenom}</span>
