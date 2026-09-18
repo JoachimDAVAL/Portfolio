@@ -91,7 +91,7 @@ export default function ProjetsPage() {
     <main className="relative flex flex-col lg:flex-row items-center justify-center min-h-screen gap-6 lg:gap-0">
       <div
         className="fixed right-0 top-1/2 -translate-y-1/2 w-3/4 md:w-2/3 lg:w-1/2 h-full bg-contain bg-no-repeat bg-center opacity-40"
-        style={{ backgroundImage: "url('https://res.cloudinary.com/ln8fnpns/image/upload/f_auto,q_auto/v1789733264/lain.webp')" }}
+        style={{ backgroundImage: "url('https://res.cloudinary.com/ln8fnpns/image/upload/f_auto,q_auto,w_1200/v1789733264/lain.webp')" }}
       />
 
       <h1 className="mt-16 lg:mt-0 lg:absolute lg:left-4 lg:top-1/2 lg:-translate-y-1/2 lg:-rotate-90 lg:whitespace-nowrap font-title tracking-widest uppercase text-7xl md:text-8xl lg:text-9xl">
