@@ -4,8 +4,29 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { useTextScramble } from '@/hooks/useTextScramble'
+import { useAudio } from '@/context/AudioContext'
 
 const hrefs = ['/about', '/projets', '/contact']
+
+function SoundOn() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+    </svg>
+  )
+}
+
+function SoundOff() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <line x1="23" y1="9" x2="17" y2="15" />
+      <line x1="17" y1="9" x2="23" y2="15" />
+    </svg>
+  )
+}
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false)
@@ -25,6 +46,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const [underline, setUnderline] = useState({ left: 0, width: 0 })
 
   const displayedIndex = hovered ?? activeIndex
+
+  const { toggleMute, muted } = useAudio()
 
   useEffect(() => {
     const recalculate = () => {
@@ -66,6 +89,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </nav>
+      <button
+        onClick={toggleMute}
+        aria-label={muted ? 'Activer le son' : 'Couper le son'}
+        className="fixed top-4 right-6 z-50 lg:top-5 lg:right-20 cursor-pointer bg-transparent border-none text-current opacity-60 hover:opacity-100 transition-opacity duration-200"
+      >
+        {muted ? <SoundOff /> : <SoundOn />}
+      </button>
       {children}
     </>
   )
