@@ -38,8 +38,8 @@ const projets: Projet[] = [
     type: 'Site vitrine Webflow',
     annee: '2026',
     description: "Ce site a été réalisé dans le cadre de mon alternance dans une startup en hôtellerie. Je ne suis pas parti de rien car il existait un ancien site mais j'ai réadapté la charte graphique et produit l'ensemble des maquettes (desktop, tablette, mobile). Puis, j'ai réalisé l'implémentation sur Webflow.",
-    stack: ['Figma', 'Webflow'],
-    lien: 'https://bleu-minuit.webflow.io/',
+    stack: ['Webflow'],
+    lien: 'https://www.bleu-minuit.com/',
   },
 ]
 

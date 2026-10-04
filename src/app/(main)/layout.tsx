@@ -47,7 +47,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   const displayedIndex = hovered ?? activeIndex
 
-  const { toggleMute, muted } = useAudio()
+  const { toggle, active } = useAudio()
 
   useEffect(() => {
     const recalculate = () => {
@@ -90,11 +90,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         />
       </nav>
       <button
-        onClick={toggleMute}
-        aria-label={muted ? 'Activer le son' : 'Couper le son'}
+        onClick={toggle}
+        aria-label={active ? 'Couper le son' : 'Activer le son'}
         className="fixed top-4 right-6 z-50 lg:top-5 lg:right-20 cursor-pointer bg-transparent border-none text-current opacity-60 hover:opacity-100 transition-opacity duration-200"
       >
-        {muted ? <SoundOff /> : <SoundOn />}
+        {active ? <SoundOn /> : <SoundOff />}
       </button>
       {children}
     </>
