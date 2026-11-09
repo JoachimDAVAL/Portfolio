@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, type PointerEvent, type CSSProperties } from 'react'
+import { useState, useEffect, useRef, useCallback, type PointerEvent, type CSSProperties, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { useTextScramble } from '@/hooks/useTextScramble'
@@ -140,6 +140,54 @@ const projets: Projet[] = [
   },
 ]
 
+// Défilement amorti de la grid (desktop) : la molette déplace une cible, la position la rejoint en glissant (lerp).
+// Indépendant de la fréquence d'écran (60 / 120 / 144 Hz). Désactivé si "réduire les animations".
+const SMOOTH_EASE = 0.045 // part de la distance restante parcourue par frame à 60 fps — plus petit = plus lent
+function useSmoothScroll(ref: RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const desktop = window.matchMedia('(min-width: 1024px)')
+
+    let target = el.scrollTop
+    let current = el.scrollTop
+    let frame = 0
+    let last = 0
+
+    const tick = (now: number) => {
+      const dt = last ? Math.min(now - last, 50) : 16.67
+      last = now
+      const k = 1 - Math.pow(1 - SMOOTH_EASE, dt / 16.67)
+      current += (target - current) * k
+      if (Math.abs(target - current) < 0.5) current = target
+      el.scrollTop = current
+      if (current !== target) {
+        frame = requestAnimationFrame(tick)
+      } else {
+        frame = 0
+        last = 0
+      }
+    }
+
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || !desktop.matches) return // zoom navigateur / mobile : comportement natif
+      e.preventDefault()
+      // Au repos, on repart de la position réelle (clavier, glisser…)
+      if (!frame) target = current = el.scrollTop
+      const delta = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * el.clientHeight : e.deltaY
+      target = Math.max(0, Math.min(target + delta, el.scrollHeight - el.clientHeight))
+      if (!frame) frame = requestAnimationFrame(tick)
+    }
+
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => {
+      el.removeEventListener('wheel', onWheel)
+      cancelAnimationFrame(frame)
+    }
+  }, [ref])
+}
+
 // Tri des cards : plus récent en haut. Pour une période ("2025-2026"), on prend l'année de fin.
 // À année égale, l'ordre du tableau ci-dessus est conservé (sort stable).
 const anneeFin = (annee: string) => Math.max(...(annee.match(/\d{4}/g) ?? ['0']).map(Number))
@@ -177,10 +225,16 @@ function ProjectCard({ projet, onOpen }: { projet: Projet; onOpen: (p: Projet) =
           const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
           if (entry.isIntersecting && !reduce) setCrt(true)
         }
-        setInView(entry.isIntersecting)
-        setOffscreen(!entry.isIntersecting)
+        // Apparition unique : une fois révélée, la card reste en place (pas de re-fondu au scroll retour)
+        if (entry.isIntersecting) {
+          setInView(true)
+          setOffscreen(false)
+          observer.disconnect()
+        } else {
+          setOffscreen(true)
+        }
       },
-      { threshold: 0.3 }
+      { threshold: 0.15 }
     )
     observer.observe(el)
     return () => observer.disconnect()
@@ -197,9 +251,9 @@ function ProjectCard({ projet, onOpen }: { projet: Projet; onOpen: (p: Projet) =
       aria-haspopup="dialog"
       style={{ '--crt-dur': `${crtMs}ms` } as CSSProperties}
       className={
-        'group flex flex-col w-full lg:h-full snap-start text-left cursor-pointer outline-none ' +
-        'transition-[opacity,transform] duration-700 ease-out motion-reduce:transition-none ' +
-        (!offscreen ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-10 scale-95 motion-reduce:opacity-100 motion-reduce:translate-y-0 motion-reduce:scale-100')
+        'group flex flex-col w-full lg:h-full text-left cursor-pointer outline-none ' +
+        'transition-[opacity,transform] duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ' +
+        (!offscreen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 motion-reduce:opacity-100 motion-reduce:translate-y-0')
       }
     >
       {/* Image : format 16:9 fixe (= format des captures) → jamais coupée — blur + "voir le projet" au hover */}
@@ -560,6 +614,8 @@ export default function ProjetsPage() {
   const [selected, setSelected] = useState<Projet | null>(null)
   const [open, setOpen] = useState(false)
   const triggerRef = useRef<HTMLElement | null>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
+  useSmoothScroll(gridRef)
 
   const openProjet = (p: Projet) => {
     triggerRef.current = document.activeElement as HTMLElement
@@ -589,12 +645,13 @@ export default function ProjetsPage() {
 
       {/* Zone de la grid : sert aussi de cadre à la modale (même dimension) */}
       <div className="projets-frame relative w-[90vw] lg:w-[var(--grid-w)] lg:h-[var(--grid-h)]">
-        {/* Desktop : la page ne scrolle pas, c'est la grid qui scrolle (2 lignes visibles, snap par ligne) */}
+        {/* Desktop : la page ne scrolle pas, c'est la grid qui scrolle (2 lignes visibles, défilement amorti) */}
         <div
+          ref={gridRef}
           className={
             'grid grid-cols-1 gap-4 w-full ' +
             'lg:grid-cols-2 lg:h-full lg:auto-rows-[var(--row-h)] ' +
-            'lg:overflow-y-auto lg:overscroll-contain lg:snap-y lg:snap-mandatory ' +
+            'lg:overflow-y-auto lg:overscroll-contain ' +
             '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden ' +
             // La grid s'efface quand la modale est ouverte
             'transition-opacity duration-300 motion-reduce:transition-none ' +
