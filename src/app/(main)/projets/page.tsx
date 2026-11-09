@@ -536,7 +536,9 @@ function ProjetModal({ projet, open, onClose }: { projet: Projet; open: boolean;
       {/* Bouton fermer sticky : reste en haut à droite pendant TOUT le scroll (galerie comprise).
           Wrapper h-0 → ne prend pas de place ; top = padding haut de la modale → pas de saut au démarrage.
           La loupe démarre plus bas (lg:top-16) pour ne jamais passer sous ce bouton. */}
-      <div className="sticky top-24 lg:top-8 z-20 h-0 flex justify-end pointer-events-none">
+      {/* mix-blend-difference sur le wrapper (et non le bouton) : le z-20 crée un contexte d'empilement qui isolerait
+          le mélange → le bouton s'inverse selon le fond qu'il survole (crème sur sombre, foncé sur image claire). */}
+      <div className="sticky top-24 lg:top-8 z-20 h-0 flex justify-end pointer-events-none mix-blend-difference">
         <button
           type="button"
           onClick={onClose}
