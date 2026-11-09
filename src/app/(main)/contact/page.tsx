@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useTextScramble } from '@/hooks/useTextScramble'
@@ -40,7 +40,7 @@ export default function ContactPage() {
 
           <div className="flex items-start justify-start flex-1 min-w-[280px]">
             <ul className="flex flex-col h-full justify-between gap-6 text-sm min-[1700px]:text-base">
-              <li className="group flex justify-between border-b border-current/30 pb-2"><a href="mailto:joachim.daval01@gmail.com" className="flex justify-between w-full"><span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">[</span>{emailDisplay}<span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-auto">]</span></a></li>
+              <li className="group flex justify-between border-b border-current/30 pb-2"><a href="mailto:joachim.daval@proton.me" className="flex justify-between w-full"><span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">[</span>{emailDisplay}<span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-auto">]</span></a></li>
               <li className="group flex justify-between border-b border-current/30 pb-2"><a href="https://github.com/JoachimDAVAL" target="_blank" rel="noopener noreferrer" className="flex justify-between w-full"><span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">[</span>{githubDisplay}<span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-auto">]</span></a></li>
               <li className="group flex justify-between border-b border-current/30 pb-2"><a href="https://www.linkedin.com/in/joachim-daval/" target="_blank" rel="noopener noreferrer" className="flex justify-between w-full"><span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">[</span>{linkedinDisplay}<span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-auto">]</span></a></li>
               <li className="group flex justify-between border-b border-current/30 pb-2"><a href="/DAVALjoachim_CV.pdf" download className="flex justify-between w-full"><span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150">[</span>{cvDisplay}<span className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 ml-auto">]</span></a></li>

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { AudioProvider } from "@/context/AudioContext";
 
 export const metadata: Metadata = {
   title: "Joachim Daval — Portfolio",
@@ -23,9 +22,7 @@ export default function RootLayout({
         <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body>
-        <AudioProvider>
-          {children}
-        </AudioProvider>
+        {children}
       </body>
     </html>
   );
