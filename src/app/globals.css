@@ -103,10 +103,10 @@ body {
 }
 /* ---------- /projets : dimensions de la grid (et de la modale) ---------- */
 /* Les images des cards sont en 16:9 → la hauteur des lignes découle de la largeur.
-   Largeur = 60vw, plafonnée pour que 2 lignes tiennent dans 85vh sur les écrans larges et peu hauts.
+   Largeur = 70vw, plafonnée pour que 2 lignes tiennent dans 90vh sur les écrans larges et peu hauts.
    2 lignes = 2 × (image 16:9 + bandeau 2.5rem) + gap 1rem. */
 .projets-frame {
-  --grid-w: min(60vw, calc((85vh - 6rem) * 16 / 9 + 1rem));
+  --grid-w: min(70vw, calc((90vh - 6rem) * 16 / 9 + 1rem));
   --row-h: calc((var(--grid-w) - 1rem) / 2 * 9 / 16 + 2.5rem);
   --grid-h: calc(var(--row-h) * 2 + 1rem);
 }

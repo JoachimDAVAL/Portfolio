@@ -639,7 +639,9 @@ export default function ProjetsPage() {
         style={{ backgroundImage: "url('https://res.cloudinary.com/ln8fnpns/image/upload/f_auto,q_auto,w_1200/v1789733264/lain.webp')" }}
       />
 
-      <h1 className="mt-16 lg:mt-0 lg:absolute lg:left-4 lg:top-1/2 lg:-translate-y-1/2 lg:-rotate-90 lg:whitespace-nowrap font-title tracking-widest uppercase text-7xl md:text-8xl lg:text-9xl">
+      {/* Desktop : texte vertical via writing-mode (et non rotate seul) → la boîte du h1 est réellement étroite
+          et collée au bord gauche, au lieu d'une boîte horizontale tournée autour de son centre. rotate-180 = lecture de bas en haut. */}
+      <h1 className="mt-16 lg:mt-0 lg:absolute lg:left-4 lg:top-1/2 lg:-translate-y-1/2 lg:[writing-mode:vertical-rl] lg:rotate-180 lg:whitespace-nowrap font-title tracking-widest uppercase text-7xl md:text-8xl lg:text-9xl">
         Projets
       </h1>
 
