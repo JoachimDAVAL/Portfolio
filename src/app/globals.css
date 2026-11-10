@@ -36,12 +36,12 @@ body {
 @keyframes crt-flicker {
   0%   { filter: brightness(2.2) contrast(2.6) saturate(0) blur(2px);   transform: translateX(-6px) scaleY(1.04); }
   8%   { filter: brightness(0.35) contrast(3) saturate(0) blur(1.5px);  transform: translateX(5px); }
-  16%  { filter: brightness(1.9) contrast(2) saturate(0.2) blur(1px);   transform: translateX(-3px) scaleY(1.02); }
-  26%  { filter: brightness(0.6) contrast(2.2) saturate(0.3) blur(1px); transform: translateX(2px); }
-  38%  { filter: brightness(1.5) contrast(1.6) saturate(0.5) blur(0.6px); transform: translateX(-2px); }
-  52%  { filter: brightness(0.85) contrast(1.4) saturate(0.7) blur(0.4px); transform: translateX(1px); }
-  68%  { filter: brightness(1.2) contrast(1.2) saturate(0.9) blur(0.2px); transform: none; }
-  84%  { filter: brightness(0.95) contrast(1.05) saturate(1); transform: none; }
+  16%  { filter: brightness(1.9) contrast(2) saturate(0) blur(1px);   transform: translateX(-3px) scaleY(1.02); }
+  26%  { filter: brightness(0.6) contrast(2.2) saturate(0) blur(1px); transform: translateX(2px); }
+  38%  { filter: brightness(1.5) contrast(1.6) saturate(0) blur(0.6px); transform: translateX(-2px); }
+  52%  { filter: brightness(0.85) contrast(1.4) saturate(0) blur(0.4px); transform: translateX(1px); }
+  68%  { filter: brightness(1.2) contrast(1.2) saturate(0) blur(0.2px); transform: none; }
+  84%  { filter: brightness(0.95) contrast(1.05) saturate(0); transform: none; }
   100% { filter: none; transform: none; }
 }
 
@@ -51,8 +51,8 @@ body {
   opacity: 0;
   animation: crt-slices var(--crt-dur, 500ms) steps(1, end) forwards;
 }
-.crt-slices--r { filter: sepia(1) saturate(8) hue-rotate(-50deg); }
-.crt-slices--c { filter: sepia(1) saturate(8) hue-rotate(140deg); animation-direction: reverse; }
+.crt-slices--r { filter: grayscale(1) contrast(1.8) brightness(1.4); }
+.crt-slices--c { filter: grayscale(1) contrast(2.2) brightness(0.9); animation-direction: reverse; }
 @keyframes crt-slices {
   0%   { clip-path: inset(10% 0 78% 0); transform: translateX(18px);  opacity: 0.9; }
   10%  { clip-path: inset(62% 0 22% 0); transform: translateX(-22px); opacity: 0.9; }
@@ -84,7 +84,7 @@ body {
   height: 18%;
   opacity: 0;
   mix-blend-mode: screen;
-  background: linear-gradient(to bottom, transparent 0%, rgba(226, 206, 202, 0.15) 35%, rgba(255, 255, 255, 0.9) 50%, rgba(226, 206, 202, 0.15) 65%, transparent 100%);
+  background: linear-gradient(to bottom, transparent 0%, rgba(255, 255, 255, 0.15) 35%, rgba(255, 255, 255, 0.9) 50%, rgba(255, 255, 255, 0.15) 65%, transparent 100%);
   animation: crt-bolt var(--crt-dur, 500ms) linear forwards;
 }
 .crt-bolt--2 {

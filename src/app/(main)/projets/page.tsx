@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, type PointerEvent, type CSSProperties, type RefObject } from 'react'
+import { useState, useEffect, useRef, useCallback, type CSSProperties, type RefObject } from 'react'
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { useTextScramble } from '@/hooks/useTextScramble'
@@ -292,7 +292,8 @@ function ProjectCard({ projet, onOpen }: { projet: Projet; onOpen: (p: Projet) =
 type GalerieImage = { label: string; src: string }
 
 // Galerie à loupe : miniatures pleine page à gauche (30%), loupe "bande pleine largeur" à droite (65% + débord de 1/3 hors de la modale).
-// Le survol d'une miniature choisit la hauteur affichée dans la loupe.
+// La loupe est pilotée par le scroll de la modale (pas par le curseur) : une fois la section atteinte,
+// la progression du scroll parcourt les miniatures de haut en bas, l'une après l'autre.
 // Sert pour l'Avant / Après comme pour une sélection de pages du site.
 function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; defaut?: number; titre: string; open: boolean }) {
   // placeholderRef : bloc invisible dans la modale, qui garde la place et le comportement sticky de la loupe.
@@ -310,8 +311,6 @@ function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; 
   useEffect(() => setMounted(true), [])
 
   const thumbRefs = useRef<(HTMLImageElement | null)[]>([])
-  // Dernière position connue du curseur (pour recalculer la loupe quand on scrolle sans bouger la souris)
-  const pointer = useRef<{ x: number; y: number } | null>(null)
 
   // Recale la loupe visible sur le placeholder : même bord gauche, même hauteur, largeur × 4/3 (déborde à droite).
   // Haut et bas restent coupés aux bords de la modale ; seul le débordement à droite est autorisé.
@@ -320,14 +319,22 @@ function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; 
     if (!ph) return
     const r = ph.getBoundingClientRect()
     if (r.width === 0) { setBox(null); return } // placeholder masqué (mobile)
-    const d = ph.closest('[role="dialog"]')?.getBoundingClientRect()
+    const dialog = ph.closest('[role="dialog"]')
+    const d = dialog?.getBoundingClientRect()
+    // En fin de scroll, la section se termine et le placeholder se décolle (il remonte avec elle) :
+    // la loupe ne remonte jamais au-dessus de sa position sticky → elle ne passe pas sous le bouton fermer.
+    // Le sticky se cale sous le padding de la modale : position collée = haut + padding + top.
+    const stickyTop = d && dialog
+      ? d.top + (parseFloat(getComputedStyle(dialog).paddingTop) || 0) + (parseFloat(getComputedStyle(ph).top) || 0)
+      : r.top
+    const top = Math.max(r.top, stickyTop)
     setBox({
       left: r.left,
-      top: r.top,
+      top,
       width: (r.width * 4) / 3,
       height: r.height,
-      clipTop: d ? Math.max(0, d.top - r.top) : 0,
-      clipBottom: d ? Math.max(0, r.bottom - d.bottom) : 0,
+      clipTop: d ? Math.max(0, d.top - top) : 0,
+      clipBottom: d ? Math.max(0, top + r.height - d.bottom) : 0,
     })
   }, [])
 
@@ -347,13 +354,34 @@ function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; 
     setLens({ top: (offset / zoomedH) * 100, height: Math.min(panelH / zoomedH, 1) * 100 })
   }, [])
 
-  const handleMove = (index: number) => (e: PointerEvent<HTMLImageElement>) => {
-    if (e.pointerType !== 'mouse') return
-    pointer.current = { x: e.clientX, y: e.clientY }
-    update(index, e.currentTarget.getBoundingClientRect(), e.clientY)
-  }
+  // Loupe pilotée par le scroll, quelle que soit la position du curseur.
+  // Arrivée dans la section = la loupe (sticky) se bloque et les miniatures commencent à passer au-dessus d'elle.
+  // De là jusqu'au bas de la modale, la progression p (0 → 1) déplace un point de lecture
+  // du haut de la 1re miniature au bas de la dernière ; la miniature sous ce point devient active.
+  const follow = useCallback(() => {
+    const ph = placeholderRef.current
+    const scroller = ph?.closest('[role="dialog"]')
+    const imgs = thumbRefs.current.slice(0, images.length)
+    if (!ph || !scroller || ph.offsetWidth === 0 || imgs.length === 0 || imgs.some((img) => !img)) return
+    const rects = imgs.map((img) => img!.getBoundingClientRect())
 
-  // Scroll de la modale : recale la loupe + recalcule la zone si la miniature bouge sous le curseur immobile
+    const parcouru = ph.getBoundingClientRect().top - rects[0].top
+    if (parcouru <= 1) {
+      // Avant la section : loupe au repos sur l'image par défaut
+      setActive(defaut)
+      setLens(null)
+      setOffsets((o) => (o.every((v) => v === 0) ? o : o.map(() => 0)))
+      return
+    }
+    const reste = Math.max(scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop, 0)
+    const p = Math.min(parcouru / (parcouru + reste), 1)
+    const y = rects[0].top + p * (rects[rects.length - 1].bottom - rects[0].top)
+    let index = 0
+    rects.forEach((r, i) => { if (r.top <= y) index = i }) // dans l'espace entre deux miniatures → la suivante, en haut
+    update(index, rects[index], y)
+  }, [images.length, defaut, update])
+
+  // Scroll de la modale : recale la loupe sur le placeholder + avance dans les maquettes
   useEffect(() => {
     const scroller = placeholderRef.current?.closest('[role="dialog"]')
     if (!scroller) return
@@ -362,17 +390,7 @@ function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; 
       cancelAnimationFrame(frame)
       frame = requestAnimationFrame(() => {
         sync()
-        const p = pointer.current
-        if (!p) return
-        thumbRefs.current.some((img, index) => {
-          if (!img) return false
-          const r = img.getBoundingClientRect()
-          if (p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom) {
-            update(index, r, p.y)
-            return true
-          }
-          return false
-        })
+        follow()
       })
     }
     scroller.addEventListener('scroll', onScroll, { passive: true })
@@ -382,7 +400,7 @@ function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; 
       window.removeEventListener('resize', onScroll)
       cancelAnimationFrame(frame)
     }
-  }, [sync, update])
+  }, [sync, follow])
 
   // Pendant l'animation d'ouverture / fermeture (la modale glisse), on suit le placeholder frame par frame
   useEffect(() => {
@@ -410,15 +428,12 @@ function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; 
                 src={src}
                 alt={`${titre} — ${label}, page complète`}
                 loading="lazy"
-                className="block w-full h-auto lg:cursor-zoom-in"
-                onPointerMove={handleMove(index)}
-                onPointerEnter={handleMove(index)}
-                onPointerLeave={() => { pointer.current = null }}
+                className="block w-full h-auto"
               />
               {lens && active === index ? (
                 <span
                   aria-hidden="true"
-                  className="hidden lg:block absolute left-0 w-full border border-current/70 pointer-events-none transition-[top] duration-200 ease-out"
+                  className="hidden lg:block absolute left-0 w-full border border-current/70 pointer-events-none transition-[top] duration-[400ms] ease-out"
                   style={{ top: `${lens.top}%`, height: `${lens.height}%` }}
                 />
               ) : null}
@@ -461,7 +476,7 @@ function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; 
                   src={src}
                   alt=""
                   className={
-                    'absolute top-0 left-0 w-full h-auto max-w-none transition-[transform,opacity] duration-200 ease-out motion-reduce:transition-none ' +
+                    'absolute top-0 left-0 w-full h-auto max-w-none transition-[transform,opacity] duration-[400ms] ease-out motion-reduce:transition-none ' +
                     (active === index ? 'opacity-100' : 'opacity-0')
                   }
                   style={{ transform: `translateY(-${offsets[index]}px)` }}
@@ -591,9 +606,10 @@ function ProjetModal({ projet, open, onClose }: { projet: Projet; open: boolean;
       </section>
 
       {/* CTA centré dans l'espace restant entre présentation et avant / après */}
-      <div className="flex-1 flex items-center justify-center py-12">
+      {/* Mobile : remplacé par le lien sticky en bas de la modale (voir plus bas) */}
+      <div className="flex-1 flex items-center justify-center py-6 lg:py-12">
         {projet.lien ? (
-          <a href={projet.lien} target="_blank" rel="noopener noreferrer" className="group flex gap-2 text-base lg:text-lg min-[1700px]:text-xl font-bold tracking-widest uppercase">
+          <a href={projet.lien} target="_blank" rel="noopener noreferrer" className="group hidden lg:flex gap-2 text-base lg:text-lg min-[1700px]:text-xl font-bold tracking-widest uppercase">
             <span className="opacity-0 transition-opacity duration-150 group-hover:opacity-100">[</span>
             <ScrambleText text="voir le site" revealed={open} delay={24} />
             <span className="opacity-0 transition-opacity duration-150 group-hover:opacity-100">]</span>
@@ -607,6 +623,24 @@ function ProjetModal({ projet, open, onClose }: { projet: Projet; open: boolean;
       ) : null}
 
       {/* TODO : maquettes */}
+
+      {/* Mobile : "voir le site" sticky en bas, visible pendant tout le scroll (galerie comprise).
+          Placé en fin du conteneur interne → collé en bas jusqu'à ce qu'on atteigne sa place naturelle, à la fin. */}
+      {projet.lien ? (
+        // mix-blend-difference sur le wrapper, comme le bouton fermer → s'inverse selon le fond survolé
+        <div className="lg:hidden sticky bottom-0 z-20 mt-10 flex justify-center pointer-events-none mix-blend-difference">
+          <a
+            href={projet.lien}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="pointer-events-auto flex gap-2 px-5 py-3 text-sm font-bold tracking-widest uppercase"
+          >
+            <span>[</span>
+            <ScrambleText text="voir le site" revealed={open} delay={24} />
+            <span>]</span>
+          </a>
+        </div>
+      ) : null}
       </div>
     </div>
   )
