@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server'
 import { TYPES_DEMANDE } from '@/lib/contact'
 
-// Envoi du formulaire de contact via l'API Resend (https://resend.com), sans dépendance : simple fetch.
-// Variables d'environnement (.env.local en dev, réglages du projet sur Vercel en prod) :
-//   RESEND_API_KEY  clé API Resend (obligatoire)
-//   CONTACT_TO      adresse qui reçoit les messages (obligatoire)
-//   CONTACT_FROM    expéditeur, ex. "Portfolio <contact@joachimdaval.dev>" (domaine à vérifier sur Resend).
-//                   Par défaut : onboarding@resend.dev, qui ne peut écrire qu'à l'adresse du compte Resend.
+// Envoi du formulaire de contact via l'API transactionnelle Brevo (https://www.brevo.com, données hébergées dans l'UE),
+// sans dépendance : simple fetch.
+// Variables d'environnement (.env.local en dev, réglages du projet sur Vercel en prod) — toutes obligatoires :
+//   BREVO_API_KEY  clé API Brevo (SMTP & API → Clés API)
+//   CONTACT_TO     adresse qui reçoit les messages
+//   CONTACT_FROM   adresse expéditrice, déclarée comme expéditeur dans Brevo, ex. contact@joachimdaval.dev
+//                  (domaine authentifié dans Brevo via DNS → meilleure délivrabilité)
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const DELAI_MIN_MS = 3000 // un humain met plus de 3 s à remplir le formulaire
@@ -61,27 +62,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Trop d'envois rapprochés. Réessayez dans quelques minutes." }, { status: 429 })
   }
 
-  const apiKey = process.env.RESEND_API_KEY
+  const apiKey = process.env.BREVO_API_KEY
   const to = process.env.CONTACT_TO
-  if (!apiKey || !to) {
-    console.error('[contact] RESEND_API_KEY ou CONTACT_TO manquant')
+  const from = process.env.CONTACT_FROM
+  if (!apiKey || !to || !from) {
+    console.error('[contact] BREVO_API_KEY, CONTACT_TO ou CONTACT_FROM manquant')
     return NextResponse.json({ error: "L'envoi est momentanément indisponible." }, { status: 500 })
   }
 
-  const res = await fetch('https://api.resend.com/emails', {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    headers: { 'api-key': apiKey, 'Content-Type': 'application/json', accept: 'application/json' },
     body: JSON.stringify({
-      from: process.env.CONTACT_FROM || 'Portfolio <onboarding@resend.dev>',
-      to: [to],
-      reply_to: email, // "Répondre" dans la boîte mail → répond directement à la personne
+      sender: { name: 'Portfolio', email: from },
+      to: [{ email: to }],
+      replyTo: { email, name: nom }, // "Répondre" dans la boîte mail → répond directement à la personne
       subject: `[Portfolio] ${type || 'Contact'} — ${nom}`,
-      text: `Nom : ${nom}\nE-mail : ${email}\nType de demande : ${type || '—'}\n\n${message}`,
+      textContent: `Nom : ${nom}\nE-mail : ${email}\nType de demande : ${type || '—'}\n\n${message}`,
     }),
   })
 
   if (!res.ok) {
-    console.error('[contact] Resend', res.status, await res.text())
+    console.error('[contact] Brevo', res.status, await res.text())
     return NextResponse.json({ error: "L'envoi a échoué. Réessayez ou écrivez-moi directement." }, { status: 502 })
   }
 
