@@ -146,7 +146,7 @@ export default function ContactForm({ revealed }: { revealed: boolean }) {
                 type="button"
                 aria-pressed={actif}
                 onClick={() => setType(actif ? '' : t)}
-                className={`group flex gap-1 cursor-pointer transition-opacity ${actif ? 'opacity-100' : 'opacity-50 hover:opacity-100'}`}
+                className={`group flex gap-1 text-left cursor-pointer transition-opacity ${actif ? 'opacity-100' : 'opacity-50 hover:opacity-100'}`}
               >
                 <span className={actif ? 'opacity-100' : 'opacity-0'}>[</span>
                 {t}
