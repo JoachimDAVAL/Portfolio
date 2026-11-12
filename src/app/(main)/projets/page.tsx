@@ -14,9 +14,16 @@ type Projet = {
   image: string
   lien?: string
   // Captures pleine page (desktop, même largeur) affichées avec la loupe : Avant / Après ou pages clés
-  galerie?: { label: string; src: string }[]
+  galerie?: GalerieImage[]
   galerieDefaut?: number // index affiché dans la loupe au repos (0 par défaut)
+  // Projet client pas encore livré : pas de lien, visuels floutés, mention "en cours".
+  // Les captures réelles attendent dans le vault (01 PROJECTS/Portfolio/images-en-attente/) :
+  // à la mise en ligne, les remettre dans public/, retirer ce champ et rétablir lien + galerie.
+  enCours?: { miseEnLigne?: string } // ex. { miseEnLigne: 'janvier 2027' }
 }
+
+// flou : visuel volontairement illisible (projet en cours) → mention superposée
+type GalerieImage = { label: string; src: string; flou?: boolean }
 
 // Source des textes : vault → 01 PROJECTS/Portfolio/contenus/projets/<projet>.md
 const projets: Projet[] = [
@@ -29,13 +36,12 @@ const projets: Projet[] = [
       "Ylyos est un cabinet de conseil en finance d'entreprise, spécialisé dans les marchés de capitaux. Son site existant tenait sur une seule page, avec des images manquantes et une navigation quasi absente. Le dirigeant avait besoin d'une vraie vitrine professionnelle.",
       "J'ai étudié les souhaits du client pour établir une charte graphique qui lui correspondait, puis construit les maquettes dans une démarche UX/UI et accessibilité avant de les intégrer sur WordPress pour que mon client garde une autonomie sur ses contenus.",
     ],
-    image: '/images/projets/ylyos/card.webp',
-    lien: 'https://ylyos.vercel.app/',
+    image: '/images/projets/ylyos/card-flou.webp',
+    enCours: {},
     galerie: [
       { label: 'Avant', src: '/images/projets/ylyos/avant.webp' },
-      { label: 'Après', src: '/images/projets/ylyos/apres.webp' },
+      { label: 'Après', src: '/images/projets/ylyos/apres-flou.webp', flou: true },
     ],
-    galerieDefaut: 1,
   },
   {
     titre: 'Bleu Minuit',
@@ -78,15 +84,12 @@ const projets: Projet[] = [
       "Pour ce projet j'ai repensé intégralement l'identité du site, conçu un parcours de réservation directe, puis développé un thème WordPress sur mesure.",
       "Mais je suis allé plus loin qu'un simple site vitrine : j'ai aussi construit toute la mécanique en coulisses. Une base de données centralise désormais les clients et l'historique des réservations, les devis et contrats sont générés et envoyés automatiquement, et le suivi client passe par un CRM. Le propriétaire gère son activité en autonomie, depuis son téléphone, pour quelques euros par mois.",
     ],
-    image: '/images/projets/chalet-nature/card.webp',
-    lien: 'https://chalet-nature-site.vercel.app/',
+    image: '/images/projets/chalet-nature/card-flou.webp',
+    enCours: {},
     galerie: [
       { label: 'Avant', src: '/images/projets/chalet-nature/avant.webp' },
-      { label: 'Après', src: '/images/projets/chalet-nature/accueil.webp' },
-      { label: 'Chalet', src: '/images/projets/chalet-nature/chalet.webp' },
-      { label: 'Réservation', src: '/images/projets/chalet-nature/reservation.webp' },
+      { label: 'Après', src: '/images/projets/chalet-nature/apres-flou.webp', flou: true },
     ],
-    galerieDefaut: 1,
   },
   {
     titre: 'Hoovie',
@@ -188,10 +191,12 @@ function useSmoothScroll(ref: RefObject<HTMLElement | null>) {
   }, [ref])
 }
 
-// Tri des cards : plus récent en haut. Pour une période ("2025-2026"), on prend l'année de fin.
-// À année égale, l'ordre du tableau ci-dessus est conservé (sort stable).
+// Tri des cards : projets en cours d'abord, puis plus récent en haut. Pour une période ("2025-2026"), on prend l'année de fin.
+// À égalité, l'ordre du tableau ci-dessus est conservé (sort stable).
 const anneeFin = (annee: string) => Math.max(...(annee.match(/\d{4}/g) ?? ['0']).map(Number))
-const projetsTries = [...projets].sort((a, b) => anneeFin(b.annee) - anneeFin(a.annee))
+const projetsTries = [...projets].sort(
+  (a, b) => Number(!!b.enCours) - Number(!!a.enCours) || anneeFin(b.annee) - anneeFin(a.annee)
+)
 
 function ProjectCard({ projet, onOpen }: { projet: Projet; onOpen: (p: Projet) => void }) {
   const ref = useRef<HTMLButtonElement>(null)
@@ -275,6 +280,12 @@ function ProjectCard({ projet, onOpen }: { projet: Projet; onOpen: (p: Projet) =
             <span aria-hidden="true" className="crt crt-bolt crt-bolt--2" />
           </>
         ) : null}
+        {/* Projet en cours : mention au repos, laisse la place à "voir le projet" au hover */}
+        {projet.enCours ? (
+          <span className="absolute inset-0 flex items-center justify-center text-sm lg:text-base tracking-widest uppercase transition-opacity duration-500 group-hover:opacity-0 group-focus-visible:opacity-0">
+            [ en cours ]
+          </span>
+        ) : null}
         <span className="absolute inset-0 flex items-center justify-center bg-[#141414]/50 opacity-0 transition-opacity duration-500 group-hover:opacity-100 group-focus-visible:opacity-100 text-sm lg:text-base tracking-widest uppercase">
           voir le projet
         </span>
@@ -283,13 +294,19 @@ function ProjectCard({ projet, onOpen }: { projet: Projet; onOpen: (p: Projet) =
       {/* Nom + année : hauteur fixe 2.5rem (--row-h en tient compte) */}
       <span className="h-10 shrink-0 flex items-center justify-between text-xs lg:text-sm min-[1700px]:text-base">
         <span className="font-title tracking-widest uppercase text-lg md:text-xl lg:text-2xl">{titreDisplay}</span>
-        <span>{anneeDisplay}</span>
+        <span className="flex items-center gap-2">
+          {anneeDisplay}
+          {projet.enCours ? (
+            <>
+              <span aria-hidden="true" className="size-1.5 rounded-full bg-current animate-pulse motion-reduce:animate-none" />
+              <span className="sr-only">projet en cours</span>
+            </>
+          ) : null}
+        </span>
       </span>
     </button>
   )
 }
-
-type GalerieImage = { label: string; src: string }
 
 // Galerie à loupe : miniatures pleine page à gauche (30%), loupe "bande pleine largeur" à droite (65% + débord de 1/3 hors de la modale).
 // La loupe est pilotée par le scroll de la modale (pas par le curseur) : une fois la section atteinte,
@@ -418,7 +435,7 @@ function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; 
     <section className="flex flex-col lg:flex-row items-start gap-10 lg:gap-[5%]">
       {/* Miniatures */}
       <div className="flex flex-col gap-8 w-full lg:w-[30%] shrink-0">
-        {images.map(({ label, src }, index) => (
+        {images.map(({ label, src, flou }, index) => (
           <figure key={src} className="flex flex-col gap-3">
             <figcaption className="h-6 leading-6 text-xs lg:text-sm min-[1700px]:text-base tracking-widest uppercase">{label}</figcaption>
             <div className="relative">
@@ -426,10 +443,18 @@ function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; 
               <img
                 ref={(el) => { thumbRefs.current[index] = el }}
                 src={src}
-                alt={`${titre} — ${label}, page complète`}
+                alt={flou ? `${titre} — ${label}, aperçu disponible à la mise en ligne` : `${titre} — ${label}, page complète`}
                 loading="lazy"
                 className="block w-full h-auto"
               />
+              {flou ? (
+                // sticky : la mention reste visible pendant que la longue miniature défile
+                <span aria-hidden="true" className="absolute inset-0 pointer-events-none">
+                  <span className="sticky top-1/3 block py-16 text-center text-xs tracking-widest uppercase whitespace-nowrap">
+                    [ aperçu à venir ]
+                  </span>
+                </span>
+              ) : null}
               {lens && active === index ? (
                 <span
                   aria-hidden="true"
@@ -485,6 +510,11 @@ function Galerie({ images, defaut = 0, titre, open }: { images: GalerieImage[]; 
               <span className="absolute top-3 left-3 px-2 py-1 bg-[#141414]/80 text-xs tracking-widest uppercase">
                 {images[active]?.label}
               </span>
+              {images[active]?.flou ? (
+                <span className="absolute inset-0 flex items-center justify-center text-sm lg:text-base tracking-widest uppercase">
+                  [ aperçu à la mise en ligne ]
+                </span>
+              ) : null}
             </div>,
             document.body
           )
@@ -595,14 +625,21 @@ function ProjetModal({ projet, open, onClose }: { projet: Projet; open: boolean;
             <p key={idx}><ScrambleText text={para} revealed={open} delay={16 + idx * 6} step={5} block /></p>
           ))}
         </div>
-        <Image
-          src={projet.image}
-          alt={`Page d'accueil du projet ${projet.titre}`}
-          width={2880}
-          height={1620}
-          sizes="(min-width: 1024px) 30vw, 90vw"
-          className="w-full h-auto"
-        />
+        <div className="relative">
+          <Image
+            src={projet.image}
+            alt={projet.enCours ? `Projet ${projet.titre} en cours, aperçu disponible à la mise en ligne` : `Page d'accueil du projet ${projet.titre}`}
+            width={2880}
+            height={1620}
+            sizes="(min-width: 1024px) 30vw, 90vw"
+            className="w-full h-auto"
+          />
+          {projet.enCours ? (
+            <span aria-hidden="true" className="absolute inset-0 flex items-center justify-center text-sm lg:text-base tracking-widest uppercase">
+              [ en cours ]
+            </span>
+          ) : null}
+        </div>
       </section>
 
       {/* CTA centré dans l'espace restant entre présentation et avant / après */}
@@ -614,6 +651,17 @@ function ProjetModal({ projet, open, onClose }: { projet: Projet; open: boolean;
             <ScrambleText text="voir le site" revealed={open} delay={24} />
             <span className="opacity-0 transition-opacity duration-150 group-hover:opacity-100">]</span>
           </a>
+        ) : projet.enCours ? (
+          // Pas de lien : le site n'est pas encore livré (visible aussi sur mobile, pas de version sticky)
+          <p className="flex gap-2 text-sm lg:text-lg min-[1700px]:text-xl font-bold tracking-widest uppercase text-center">
+            <span>[</span>
+            <ScrambleText
+              text={projet.enCours.miseEnLigne ? `mise en ligne prévue · ${projet.enCours.miseEnLigne}` : 'mise en ligne à venir'}
+              revealed={open}
+              delay={24}
+            />
+            <span>]</span>
+          </p>
         ) : null}
       </div>
       </div>
