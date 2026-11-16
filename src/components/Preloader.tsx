@@ -123,7 +123,7 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
         for (let k = 1; k <= STEPS; k++) later(() => eye(k, k === STEPS ? res : undefined), (k - 1) * STEP_MS)
       })
       const wordIn = new Promise<void>((res) => {
-        later(() => { word.style.opacity = '1'; later(res, WORD_MS) }, 3 * STEP_MS)
+        later(() => { word.style.opacity = '0.5' /* plus bas que l'œil (80 %) : lettres pleines, elles paraissent plus fortes que les caractères épars */; later(res, WORD_MS) }, 3 * STEP_MS)
       })
       Promise.all([eyeFull, wordIn]).then(() => { if (!ended && !cancelled) later(end, HOLD_MS) })
     }
