@@ -4,16 +4,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { useTextScramble } from '@/hooks/useTextScramble'
+import Preloader, { IntroContext } from '@/components/Preloader'
 
 const hrefs = ['/about', '/projets', '/contact']
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  // ready : l'entrée (Preloader) est finie ou n'a pas lieu → la navbar et les pages lancent leurs animations
+  const [ready, setReady] = useState(false)
 
-  const aboutDisplay   = useTextScramble('About',   mounted)
-  const projetsDisplay = useTextScramble('Projets', mounted, 4)
-  const contactDisplay = useTextScramble('Contact', mounted, 8)
+  const aboutDisplay   = useTextScramble('About',   ready)
+  const projetsDisplay = useTextScramble('Projets', ready, 4)
+  const contactDisplay = useTextScramble('Contact', ready, 8)
   const displays = [aboutDisplay, projetsDisplay, contactDisplay]
 
   const pathname = usePathname()
@@ -44,7 +45,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   }, [displayedIndex])
 
   return (
-    <>
+    <IntroContext.Provider value={ready}>
+      <Preloader onDone={() => setReady(true)} />
       <nav ref={navRef} className="fixed z-50 flex gap-5 top-0 left-0 w-full bg-[#141414] px-6 py-4 lg:top-5 lg:left-20 lg:bg-transparent lg:w-auto lg:px-0 lg:py-0">
         {hrefs.map((href, i) => (
           <Link
@@ -67,6 +69,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         />
       </nav>
       {children}
-    </>
+    </IntroContext.Provider>
   )
 }

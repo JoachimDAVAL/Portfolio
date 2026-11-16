@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useTextScramble } from '@/hooks/useTextScramble'
+import { useIntroReady } from '@/components/Preloader'
 
 const stackData = [
   { title: 'Frontend', items: ['REACT', 'NEXT.JS', 'TYPESCRIPT', 'TAILWINDCSS'] },
@@ -29,8 +29,7 @@ function StackGroup({ title, items, mounted }: { title: string; items: string[];
 }
 
 export default function AboutPage() {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  const mounted = useIntroReady()
 
   // Hero
   const prenom    = useTextScramble('Joachim',    mounted)

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTextScramble } from '@/hooks/useTextScramble'
+import { useIntroReady } from '@/components/Preloader'
 import ContactForm from './ContactForm'
 
 const EMAIL = 'joachim.daval@proton.me'
@@ -10,8 +11,7 @@ const EMAIL = 'joachim.daval@proton.me'
 const crochet = 'opacity-0 group-hover:opacity-100 transition-opacity duration-150'
 
 export default function ContactPage() {
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  const mounted = useIntroReady()
 
   const [copie, setCopie] = useState(false)
   const copierEmail = async () => {

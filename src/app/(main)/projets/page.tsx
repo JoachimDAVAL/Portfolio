@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, type CSSProperties, type RefO
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
 import { useTextScramble } from '@/hooks/useTextScramble'
+import { useIntroReady } from '@/components/Preloader'
 
 type Projet = {
   titre: string
@@ -200,6 +201,8 @@ const projetsTries = [...projets].sort(
 
 function ProjectCard({ projet, onOpen }: { projet: Projet; onOpen: (p: Projet) => void }) {
   const ref = useRef<HTMLButtonElement>(null)
+  // Pas d'arrivée des cards (scramble, effet cathodique) tant que l'entrée du site est à l'écran
+  const introReady = useIntroReady()
 
   // Effet écran cathodique à l'arrivée sur la page (cards visibles au chargement uniquement).
   // Durée calée sur le scramble : le texte le plus long finit vers (longueur + ~14) frames.
@@ -222,7 +225,7 @@ function ProjectCard({ projet, onOpen }: { projet: Projet; onOpen: (p: Projet) =
   // La card "vient à toi" quand elle entre dans la zone visible de la grid
   useEffect(() => {
     const el = ref.current
-    if (!el) return
+    if (!el || !introReady) return
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!arrivedRef.current) {
@@ -243,7 +246,7 @@ function ProjectCard({ projet, onOpen }: { projet: Projet; onOpen: (p: Projet) =
     )
     observer.observe(el)
     return () => observer.disconnect()
-  }, [])
+  }, [introReady])
 
   const titreDisplay = useTextScramble(projet.titre, inView)
   const anneeDisplay = useTextScramble(projet.annee, inView, 6)

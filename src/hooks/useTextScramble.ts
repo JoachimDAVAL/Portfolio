@@ -2,7 +2,7 @@
 
 const CHARSET = '!<>-_\\/[]{}=+*^?#'
 
-function randomChar(): string {
+export function randomChar(): string {
   return CHARSET[Math.floor(Math.random() * CHARSET.length)]
 }
 

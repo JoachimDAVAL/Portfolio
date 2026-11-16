@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { INTRO_SCRIPT } from "@/lib/intro";
 
 export const metadata: Metadata = {
   title: "Joachim Daval — Portfolio",
@@ -12,8 +13,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <head>
+        {/* Décide avant le premier affichage si l'entrée (Preloader) est jouée : voir src/lib/intro.ts */}
+        <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />
         <link rel="preconnect" href="https://use.typekit.net" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://use.typekit.net/ttq6oku.css" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />

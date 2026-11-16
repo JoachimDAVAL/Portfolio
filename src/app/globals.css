@@ -17,6 +17,11 @@ body {
   overflow-x: hidden;
 }
 
+/* ---------- Preloader (src/components/Preloader.tsx) ----------
+   Affiché seulement si le script inline du <head> a posé html[data-intro] (entrée pas encore vue dans la session) */
+.intro-overlay { display: none; }
+html[data-intro] .intro-overlay { display: flex; }
+
 .font-title {
   font-family: 'bd-palaktbau', sans-serif;
 }
