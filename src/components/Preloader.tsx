@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useRef } from 'react'
-import { randomChar } from '@/hooks/useTextScramble'
+import { FRAME_MS, randomChar } from '@/hooks/useTextScramble'
 import { INTRO_KEY } from '@/lib/intro'
 // Le dessin de l'œil (src/lib/eyeAscii.ts, ~18 Ko) n'est chargé que si l'entrée est jouée (1 fois par session)
 
@@ -80,6 +80,9 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
     }
 
     let active: Cell[] = []
+    // Horloge en « images » de 60 Hz (FRAME_MS) : même vitesse quelle que soit la fréquence de l'écran
+    const t0 = performance.now()
+    const clock = () => Math.floor((performance.now() - t0) / FRAME_MS)
     let frame = 0
     let raf = 0
     let onIdle: (() => void) | null = null
@@ -87,7 +90,10 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
 
     const render = () => { pre.textContent = grid.map((r) => r.join('')).join(NL) }
     const tick = () => {
-      frame++
+      const f = clock()
+      // Écran plus rapide que 60 Hz : rien à changer tant qu'on est dans la même image
+      if (f === frame) { raf = requestAnimationFrame(tick); return }
+      frame = f
       active = active.filter((cell) => {
         if (frame >= cell.end) { grid[cell.r][cell.c] = cell.to; cell.busy = false; return false }
         if (frame >= cell.start && (grid[cell.r][cell.c] === ' ' || Math.random() < 0.3)) grid[cell.r][cell.c] = randomChar()
@@ -108,6 +114,8 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
     const eye = (f: number, k: number, quick: [number, number] | null, done?: () => void) => {
       shown = f
       onIdle = done ?? null
+      // L'horloge a pu avancer pendant une pause (aucune animation en cours) : on part de l'image actuelle
+      frame = clock()
       const target = frames[f]
       for (const cell of cells) {
         const to = cell.g < k ? target[cell.r][cell.c] : ' '
