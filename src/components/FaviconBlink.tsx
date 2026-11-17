@@ -52,7 +52,7 @@ export default function FaviconBlink() {
 
     // Images chargées une fois en data URL : le changement est instantané, sans requête.
     const urls: Record<Frame, string> = { ...FRAMES };
-    const preload = Promise.all(
+    const preload = () => Promise.all(
       (Object.keys(FRAMES) as Frame[]).map(async (frame) => {
         const res = await fetch(FRAMES[frame]);
         if (!res.ok) throw new Error(`favicon ${frame} : ${res.status}`);
@@ -76,11 +76,15 @@ export default function FaviconBlink() {
       timer = window.setTimeout(() => blink(step + 1), ms);
     };
 
-    // Si une image manque, on laisse le favicon fixe.
-    preload.then(schedule, () => {});
+    // Chargement une fois la page chargée (le 1er clignement n'arrive pas avant 10 s) :
+    // les images ne concurrencent pas celles de la page. Si une image manque, le favicon reste fixe.
+    const start = () => { preload().then(schedule, () => {}); };
+    if (document.readyState === "complete") start();
+    else window.addEventListener("load", start, { once: true });
 
     return () => {
       cancelled = true;
+      window.removeEventListener("load", start);
       window.clearTimeout(timer);
       link.href = FRAMES.ouvert;
     };

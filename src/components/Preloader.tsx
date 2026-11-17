@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useEffect, useRef } from 'react'
 import { randomChar } from '@/hooks/useTextScramble'
-import { EYE_FRAMES } from '@/lib/eyeAscii'
 import { INTRO_KEY } from '@/lib/intro'
+// Le dessin de l'œil (src/lib/eyeAscii.ts, ~18 Ko) n'est chargé que si l'entrée est jouée (1 fois par session)
 
 // Entrée sur le site : l'œil fermé se remplit en ASCII (caractères tirés au hasard, 1/9 à la fois, en brouillage),
 // puis s'ouvre (fermé, presque fermé, mi-ouvert, ouvert : mêmes dessins que le clignement du favicon),
@@ -32,7 +32,8 @@ const NL = String.fromCharCode(10)
 export const IntroContext = createContext(true)
 export const useIntroReady = () => useContext(IntroContext)
 
-type Cell = { r: number; c: number; g: number; t: number; to: string; start: number; end: number }
+type Cell = { r: number; c: number; g: number; t: number; to: string; start: number; end: number; busy: boolean }
+type Frames = readonly (readonly string[])[]
 
 export default function Preloader({ onDone }: { onDone: () => void }) {
   const preRef = useRef<HTMLPreElement>(null)
@@ -51,25 +52,32 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
     try { sessionStorage.setItem(INTRO_KEY, '1') } catch {}
 
     // ---------- Œil : même système que le fond de l'accueil ----------
-    const R = EYE_FRAMES[0].length
-    const C = EYE_FRAMES[0][0].length
-    const grid = EYE_FRAMES[0].map(() => Array<string>(C).fill(' '))
-    // Toutes les cases utilisées par au moins un des 4 états
+    // Rempli par setup() une fois le dessin chargé ; d'ici là, l'œil est vide (eye() ne fait rien)
+    let frames: Frames = []
+    let R = 0
+    let grid: string[][] = []
     const cells: Cell[] = []
-    for (let r = 0; r < R; r++) {
-      for (let c = 0; c < C; c++) {
-        if (EYE_FRAMES.some((f) => f[r][c] !== ' ')) cells.push({ r, c, g: 0, t: 0, to: ' ', start: 0, end: 0 })
+    const setup = (loaded: Frames) => {
+      frames = loaded
+      R = loaded[0].length
+      const C = loaded[0][0].length
+      grid = loaded[0].map(() => Array<string>(C).fill(' '))
+      // Toutes les cases utilisées par au moins un des 4 états
+      for (let r = 0; r < R; r++) {
+        for (let c = 0; c < C; c++) {
+          if (loaded.some((f) => f[r][c] !== ' ')) cells.push({ r, c, g: 0, t: 0, to: ' ', start: 0, end: 0, busy: false })
+        }
       }
+      // Mélange de Fisher-Yates, puis découpage en 9 groupes égaux (pour le remplissage)
+      for (let i = cells.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        ;[cells[i], cells[j]] = [cells[j], cells[i]]
+      }
+      cells.forEach((cell, rank) => {
+        cell.g = Math.floor((rank * STEPS) / cells.length)
+        cell.t = Math.random()
+      })
     }
-    // Mélange de Fisher-Yates, puis découpage en 9 groupes égaux (pour le remplissage)
-    for (let i = cells.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[cells[i], cells[j]] = [cells[j], cells[i]]
-    }
-    cells.forEach((cell, rank) => {
-      cell.g = Math.floor((rank * STEPS) / cells.length)
-      cell.t = Math.random()
-    })
 
     let active: Cell[] = []
     let frame = 0
@@ -81,7 +89,7 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
     const tick = () => {
       frame++
       active = active.filter((cell) => {
-        if (frame >= cell.end) { grid[cell.r][cell.c] = cell.to; return false }
+        if (frame >= cell.end) { grid[cell.r][cell.c] = cell.to; cell.busy = false; return false }
         if (frame >= cell.start && (grid[cell.r][cell.c] === ' ' || Math.random() < 0.3)) grid[cell.r][cell.c] = randomChar()
         return true
       })
@@ -100,19 +108,21 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
     const eye = (f: number, k: number, quick: [number, number] | null, done?: () => void) => {
       shown = f
       onIdle = done ?? null
-      const target = EYE_FRAMES[f]
+      const target = frames[f]
       for (const cell of cells) {
         const to = cell.g < k ? target[cell.r][cell.c] : ' '
         if (to === cell.to) continue
         cell.to = to
         cell.start = frame + (quick ? Math.floor(Math.random() * 3) : Math.floor(cell.t * 8 + Math.random() * 4))
         cell.end = cell.start + (quick ? quick[0] + Math.floor(Math.random() * (quick[1] + 1)) : 6 + Math.floor(Math.random() * 10))
-        if (!active.includes(cell)) active.push(cell)
+        // Marqueur plutôt que active.includes() : sinon jusqu'à ~1 million de comparaisons quand tout l'œil change
+        if (!cell.busy) { cell.busy = true; active.push(cell) }
       }
       if (!raf) raf = requestAnimationFrame(tick)
     }
     // Taille : la grille occupe toute la hauteur du cadre, puis on l'étire en largeur pour retrouver ses proportions
     const fit = () => {
+      if (!R) return
       const box = pre.parentElement!.getBoundingClientRect()
       pre.style.fontSize = box.height / R + 'px'
       pre.style.transform = 'none'
@@ -120,7 +130,6 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
       const w = pre.getBoundingClientRect().width
       pre.style.transform = 'translateX(-50%) scaleX(' + box.width / w + ')'
     }
-    fit()
     window.addEventListener('resize', fit)
 
     // ---------- Déroulé ----------
@@ -141,8 +150,8 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
         // 2. Pause, puis l'œil s'ouvre en 3 temps, de plus en plus lents ; « Bienvenue » arrive pendant l'ouverture
         const open = new Promise<void>((res) => {
           let at = CLOSED_MS
-          for (let f = 1; f < EYE_FRAMES.length; f++) {
-            later(() => eye(f, STEPS, OPEN_SCRAMBLE[f - 1], f === EYE_FRAMES.length - 1 ? res : undefined), at)
+          for (let f = 1; f < frames.length; f++) {
+            later(() => eye(f, STEPS, OPEN_SCRAMBLE[f - 1], f === frames.length - 1 ? res : undefined), at)
             at += OPEN_GAPS_MS[f - 1] ?? 0
           }
         })
@@ -179,8 +188,16 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
     window.addEventListener('keydown', end)
     window.addEventListener('wheel', end, { passive: true })
 
-    // On attend les polices (sinon le mot changerait de police en cours de route), FONTS_MAX_MS au plus
-    Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, FONTS_MAX_MS))]).then(begin)
+    // On attend le dessin de l'œil et les polices (sinon le mot changerait de police en cours de route),
+    // ces dernières FONTS_MAX_MS au plus. Si le dessin ne se charge pas, on passe l'entrée.
+    Promise.all([
+      import('@/lib/eyeAscii'),
+      Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, FONTS_MAX_MS))]),
+    ]).then(([m]) => {
+      if (cancelled) return
+      setup(m.EYE_FRAMES)
+      begin()
+    }, end)
 
     return () => {
       cancelled = true
