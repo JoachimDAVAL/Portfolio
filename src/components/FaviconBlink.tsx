@@ -12,8 +12,6 @@ import { useEffect } from "react";
  *
  * Limites : en arrière-plan, Chrome ralentit les minuteurs (≥ 1 s par image),
  * le clignement y est donc plus lent ; Safari ignore les changements de favicon.
- *
- * Réglage rapide : ajouter ?clignement à l'URL pour un clignement toutes les 2 à 3 s.
  */
 
 const FRAMES = {
@@ -26,23 +24,19 @@ type Frame = keyof typeof FRAMES;
 
 /**
  * Clignement : [image, durée en ms], en partant de l'œil ouvert.
- * La paupière accélère en se fermant puis ralentit en s'ouvrant (même geste que le preloader,
- * un peu plus lent) : la fermeture est l'ouverture jouée à l'envers.
+ * La paupière accélère en se fermant puis ralentit en s'ouvrant (même geste que le preloader) : la fermeture est l'ouverture jouée à l'envers.
  */
 const SEQUENCE: [Frame, number][] = [
-  ["mi", 120],
-  ["presque", 70],
-  ["ferme", 250], // pause sur l'œil complètement fermé
-  ["presque", 70],
-  ["mi", 120],
+  ["mi", 100],
+  ["presque", 60],
+  ["ferme", 220], // pause sur l'œil complètement fermé
+  ["presque", 60],
+  ["mi", 100],
   ["ouvert", 0],
 ];
 /** Écart entre deux clignements, tiré au hasard entre ces bornes, en ms. */
 const DELAI_MIN_MS = 10_000;
 const DELAI_MAX_MS = 25_000;
-/** Mode réglage (?clignement dans l'URL). */
-const TEST_MIN_MS = 2_000;
-const TEST_MAX_MS = 3_000;
 
 export default function FaviconBlink() {
   useEffect(() => {
@@ -52,10 +46,6 @@ export default function FaviconBlink() {
       'link[rel="icon"][type="image/svg+xml"]',
     );
     if (!link) return;
-
-    const test = new URLSearchParams(window.location.search).has("clignement");
-    const min = test ? TEST_MIN_MS : DELAI_MIN_MS;
-    const max = test ? TEST_MAX_MS : DELAI_MAX_MS;
 
     let cancelled = false;
     let timer: number | undefined;
@@ -72,7 +62,7 @@ export default function FaviconBlink() {
 
     const schedule = () => {
       if (cancelled) return;
-      timer = window.setTimeout(() => blink(0), min + Math.random() * (max - min));
+      timer = window.setTimeout(() => blink(0), DELAI_MIN_MS + Math.random() * (DELAI_MAX_MS - DELAI_MIN_MS));
     };
 
     const blink = (step: number) => {
