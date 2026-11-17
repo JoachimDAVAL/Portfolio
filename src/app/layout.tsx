@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { INTRO_SCRIPT } from "@/lib/intro";
+import FaviconBlink from "@/components/FaviconBlink";
 
 export const metadata: Metadata = {
   title: "Joachim Daval — Portfolio",
@@ -24,6 +25,7 @@ export default function RootLayout({
         <link rel="manifest" href="/site.webmanifest" />
       </head>
       <body>
+        <FaviconBlink />
         {children}
       </body>
     </html>

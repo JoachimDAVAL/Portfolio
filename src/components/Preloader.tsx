@@ -2,21 +2,29 @@
 
 import { createContext, useContext, useEffect, useRef } from 'react'
 import { randomChar } from '@/hooks/useTextScramble'
-import { EYE_ASCII } from '@/lib/eyeAscii'
+import { EYE_FRAMES } from '@/lib/eyeAscii'
 import { INTRO_KEY } from '@/lib/intro'
 
-// Entrée sur le site : l'œil se remplit en ASCII (caractères tirés au hasard, 1/9 à la fois, en brouillage),
-// « Bienvenue » apparaît en fondu dessous, puis tout se défait et la page se forme.
-// Remplace l'ancienne page ENTER : rien à cliquer, environ 2 s.
+// Entrée sur le site : l'œil fermé se remplit en ASCII (caractères tirés au hasard, 1/9 à la fois, en brouillage),
+// puis s'ouvre (fermé, presque fermé, mi-ouvert, ouvert : mêmes dessins que le clignement du favicon),
+// chaque changement d'état passant par un brouillage. « Bienvenue » apparaît en fondu dessous,
+// puis tout se défait et la page se forme.
+// Remplace l'ancienne page ENTER : rien à cliquer, environ 2,5 s.
 // - une seule fois par session (sessionStorage), décidé avant le premier affichage par INTRO_SCRIPT
 // - rien du tout si l'utilisateur a demandé moins de mouvement
 // - un clic, une touche ou la molette font repartir l'entrée tout de suite
 // - purement visuel (aria-hidden) : la page est déjà là derrière
 
-const STEPS = 9      // l'œil se remplit en 9 temps
-const STEP_MS = 110  // écart entre deux temps
-const HOLD_MS = 700  // pause une fois l'œil complet
-const WORD_MS = 500  // fondu de « Bienvenue » (garder égal à duration-500 plus bas)
+const STEPS = 9          // l'œil fermé se remplit en 9 temps
+const FILL_MS = 70       // écart entre deux temps du remplissage
+const CLOSED_MS = 150    // pause sur l'œil fermé avant l'ouverture
+// Ouverture en ralenti progressif (le geste démarre vite et se pose) : chaque étape dure plus que la précédente.
+// OPEN_GAPS_MS = temps passé sur « presque fermé » puis sur « mi-ouvert » avant l'état suivant
+const OPEN_GAPS_MS = [60, 110]
+// Durée du brouillage de chaque étape (presque, mi, ouvert), en images (~16 ms) : [minimum, écart aléatoire]
+const OPEN_SCRAMBLE: [number, number][] = [[2, 2], [3, 3], [5, 5]]
+const HOLD_MS = 700      // pause une fois l'œil ouvert
+const WORD_MS = 500      // fondu de « Bienvenue » (garder égal à duration-500 plus bas)
 const FONTS_MAX_MS = 800
 const NL = String.fromCharCode(10)
 
@@ -24,7 +32,7 @@ const NL = String.fromCharCode(10)
 export const IntroContext = createContext(true)
 export const useIntroReady = () => useContext(IntroContext)
 
-type Cell = { r: number; c: number; ch: string; g: number; t: number; shown: boolean; to: string; start: number; end: number }
+type Cell = { r: number; c: number; g: number; t: number; to: string; start: number; end: number }
 
 export default function Preloader({ onDone }: { onDone: () => void }) {
   const preRef = useRef<HTMLPreElement>(null)
@@ -43,16 +51,17 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
     try { sessionStorage.setItem(INTRO_KEY, '1') } catch {}
 
     // ---------- Œil : même système que le fond de l'accueil ----------
-    const R = EYE_ASCII.length
-    const C = EYE_ASCII[0].length
-    const grid = EYE_ASCII.map(() => Array<string>(C).fill(' '))
+    const R = EYE_FRAMES[0].length
+    const C = EYE_FRAMES[0][0].length
+    const grid = EYE_FRAMES[0].map(() => Array<string>(C).fill(' '))
+    // Toutes les cases utilisées par au moins un des 4 états
     const cells: Cell[] = []
-    EYE_ASCII.forEach((row, r) => {
+    for (let r = 0; r < R; r++) {
       for (let c = 0; c < C; c++) {
-        if (row[c] !== ' ') cells.push({ r, c, ch: row[c], g: 0, t: 0, shown: false, to: ' ', start: 0, end: 0 })
+        if (EYE_FRAMES.some((f) => f[r][c] !== ' ')) cells.push({ r, c, g: 0, t: 0, to: ' ', start: 0, end: 0 })
       }
-    })
-    // Mélange de Fisher-Yates, puis découpage en 9 groupes égaux
+    }
+    // Mélange de Fisher-Yates, puis découpage en 9 groupes égaux (pour le remplissage)
     for (let i = cells.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1))
       ;[cells[i], cells[j]] = [cells[j], cells[i]]
@@ -66,6 +75,7 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
     let frame = 0
     let raf = 0
     let onIdle: (() => void) | null = null
+    let shown = 0 // état de l'œil affiché (0 = fermé, 3 = ouvert)
 
     const render = () => { pre.textContent = grid.map((r) => r.join('')).join(NL) }
     const tick = () => {
@@ -84,16 +94,19 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
         cb?.()
       }
     }
-    // k = nombre de groupes visibles (0 à 9) ; done = appelé quand tous les caractères sont posés
-    const eye = (k: number, done?: () => void) => {
+    // f = état de l'œil (0 à 3) ; k = nombre de groupes visibles (0 à 9) ;
+    // quick = brouillage court [minimum, écart] en images (ouverture), sinon brouillage lent du remplissage ;
+    // done = appelé quand tous les caractères sont posés
+    const eye = (f: number, k: number, quick: [number, number] | null, done?: () => void) => {
+      shown = f
       onIdle = done ?? null
+      const target = EYE_FRAMES[f]
       for (const cell of cells) {
-        const want = cell.g < k
-        if (want === cell.shown) continue
-        cell.shown = want
-        cell.to = want ? cell.ch : ' '
-        cell.start = frame + Math.floor(cell.t * 8 + Math.random() * 4)
-        cell.end = cell.start + 6 + Math.floor(Math.random() * 10)
+        const to = cell.g < k ? target[cell.r][cell.c] : ' '
+        if (to === cell.to) continue
+        cell.to = to
+        cell.start = frame + (quick ? Math.floor(Math.random() * 3) : Math.floor(cell.t * 8 + Math.random() * 4))
+        cell.end = cell.start + (quick ? quick[0] + Math.floor(Math.random() * (quick[1] + 1)) : 6 + Math.floor(Math.random() * 10))
         if (!active.includes(cell)) active.push(cell)
       }
       if (!raf) raf = requestAnimationFrame(tick)
@@ -119,13 +132,26 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
     const begin = () => {
       if (ended || cancelled) return
       fit()
-      const eyeFull = new Promise<void>((res) => {
-        for (let k = 1; k <= STEPS; k++) later(() => eye(k, k === STEPS ? res : undefined), (k - 1) * STEP_MS)
+      // 1. L'œil fermé se remplit
+      const closed = new Promise<void>((res) => {
+        for (let k = 1; k <= STEPS; k++) later(() => eye(0, k, null, k === STEPS ? res : undefined), (k - 1) * FILL_MS)
       })
-      const wordIn = new Promise<void>((res) => {
-        later(() => { word.style.opacity = '0.5' /* plus bas que l'œil (80 %) : lettres pleines, elles paraissent plus fortes que les caractères épars */; later(res, WORD_MS) }, 3 * STEP_MS)
+      closed.then(() => {
+        if (ended || cancelled) return
+        // 2. Pause, puis l'œil s'ouvre en 3 temps, de plus en plus lents ; « Bienvenue » arrive pendant l'ouverture
+        const open = new Promise<void>((res) => {
+          let at = CLOSED_MS
+          for (let f = 1; f < EYE_FRAMES.length; f++) {
+            later(() => eye(f, STEPS, OPEN_SCRAMBLE[f - 1], f === EYE_FRAMES.length - 1 ? res : undefined), at)
+            at += OPEN_GAPS_MS[f - 1] ?? 0
+          }
+        })
+        const wordIn = new Promise<void>((res) => {
+          later(() => { word.style.opacity = '0.5' /* plus bas que l'œil (80 %) : lettres pleines, elles paraissent plus fortes que les caractères épars */; later(res, WORD_MS) }, CLOSED_MS)
+        })
+        // 3. Pause sur l'œil ouvert, puis sortie
+        Promise.all([open, wordIn]).then(() => { if (!ended && !cancelled) later(end, HOLD_MS) })
       })
-      Promise.all([eyeFull, wordIn]).then(() => { if (!ended && !cancelled) later(end, HOLD_MS) })
     }
 
     const removeSkip = () => {
@@ -140,7 +166,7 @@ export default function Preloader({ onDone }: { onDone: () => void }) {
       removeSkip()
       // L'œil et le mot se défont (depuis leur état du moment), puis la page se forme
       Promise.all([
-        new Promise<void>((res) => eye(0, res)),
+        new Promise<void>((res) => eye(shown, 0, null, res)),
         new Promise<void>((res) => { word.style.opacity = ''; later(res, WORD_MS) }),
       ]).then(() => {
         if (cancelled) return
