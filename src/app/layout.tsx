@@ -14,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {/* Décide avant le premier affichage si l'entrée (Preloader) est jouée : voir src/lib/intro.ts */}
         <script dangerouslySetInnerHTML={{ __html: INTRO_SCRIPT }} />

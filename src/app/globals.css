@@ -26,6 +26,13 @@ html[data-intro] .intro-overlay { display: flex; }
   font-family: 'bd-palaktbau', sans-serif;
 }
 
+/* ---------- Texte brouillé à l'arrivée (src/components/Scramble.tsx) ----------
+   Copie qui réserve la place : visible seulement si l'animation n'aura pas lieu */
+.scramble-place { visibility: hidden; }
+@media (scripting: none), (prefers-reduced-motion: reduce) {
+  .scramble-place { visibility: visible; }
+}
+
 /* ---------- /projets : effet écran cathodique à l'arrivée ---------- */
 /* Durée pilotée par --crt-dur (calée sur le scramble du titre de la card) */
 .crt {

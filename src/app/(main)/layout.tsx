@@ -23,16 +23,22 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const [hovered, setHovered] = useState<number | null>(null)
   const navRef  = useRef<HTMLElement>(null)
   const linkRefs = useRef<(HTMLAnchorElement | null)[]>([])
-  const [underline, setUnderline] = useState({ left: 0, width: 0 })
+  const [underline, setUnderline] = useState({ left: 0, top: 0, width: 0 })
 
   const displayedIndex = hovered ?? activeIndex
+
+  // /methode défile : fond plein sur toute la largeur aussi sur ordinateur (liens au même endroit)
+  const barre = pathname === '/methode'
+    ? 'lg:px-20 lg:pt-5'
+    : 'lg:top-5 lg:left-20 lg:bg-transparent lg:w-auto lg:px-0 lg:py-0'
 
   useEffect(() => {
     const recalculate = () => {
       if (displayedIndex !== -1 && linkRefs.current[displayedIndex] && navRef.current) {
         const navRect = navRef.current.getBoundingClientRect()
         const elRect  = linkRefs.current[displayedIndex]!.getBoundingClientRect()
-        setUnderline({ left: elRect.left - navRect.left, width: elRect.width })
+        // Calé sous le texte (et non en bas de la barre, qui a des marges sur mobile et sur /methode)
+        setUnderline({ left: elRect.left - navRect.left, top: elRect.bottom - navRect.top - 1, width: elRect.width })
       }
     }
 
@@ -42,12 +48,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     linkRefs.current.forEach(link => { if (link) observer.observe(link) })
 
     return () => observer.disconnect()
-  }, [displayedIndex])
+  }, [displayedIndex, pathname])
 
   return (
     <IntroContext.Provider value={ready}>
       <Preloader onDone={() => setReady(true)} />
-      <nav ref={navRef} className="fixed z-50 flex gap-5 top-0 left-0 w-full bg-[#141414] px-6 py-4 lg:top-5 lg:left-20 lg:bg-transparent lg:w-auto lg:px-0 lg:py-0">
+      <nav ref={navRef} aria-label="Navigation principale" className={`fixed z-50 flex gap-5 top-0 left-0 w-full bg-[#141414] px-6 py-4 print:hidden ${barre}`}>
         {hrefs.map((href, i) => (
           <Link
             key={href}
@@ -60,8 +66,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           </Link>
         ))}
         <span
-          className="absolute bottom-0 left-0 h-px bg-current pointer-events-none transition-all duration-200"
+          className="absolute top-0 left-0 h-px bg-current pointer-events-none transition-[transform,width,opacity] duration-200"
           style={{
+            top: underline.top,
             transform: `translateX(${underline.left}px)`,
             width: displayedIndex !== -1 ? underline.width : 0,
             opacity: displayedIndex !== -1 ? 1 : 0,
