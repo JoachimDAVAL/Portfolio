@@ -44,6 +44,12 @@ html[data-intro] .intro-overlay { display: flex; }
   .scramble-place { visibility: visible; }
 }
 
+/* Signes du brouillage : absents de bd-palaktbau, dessinés dans une police de secours plus haute que la ligne.
+   Safari (iPhone) n'efface pas ce qui dépasse. Le calque animé a donc sa propre couche (will-change), jetée à la fin
+   de l'animation, et de la marge en haut et en bas dans les titres. Le texte, lui, ne bouge pas. */
+.font-title [data-calque] { inset: -0.3em 0; padding-block: 0.3em; }
+.calque-anime { will-change: transform; }
+
 /* ---------- /projets : effet écran cathodique à l'arrivée ---------- */
 /* Durée pilotée par --crt-dur (calée sur le scramble du titre de la card) */
 .crt {

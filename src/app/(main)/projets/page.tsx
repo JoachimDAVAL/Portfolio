@@ -158,7 +158,7 @@ function ProjectCard({ projet, onOpen }: { projet: Projet; onOpen: (p: Projet) =
 
       {/* Nom + année : hauteur fixe 2.5rem (--row-h en tient compte) */}
       <span className="h-10 shrink-0 flex items-center justify-between text-xs lg:text-sm min-[1700px]:text-base">
-        <span className="font-title tracking-widest uppercase text-lg md:text-xl lg:text-2xl">{titreDisplay}</span>
+        <span className={`font-title tracking-widest uppercase text-lg md:text-xl lg:text-2xl ${titreDisplay === projet.titre ? '' : 'calque-anime'}`}>{titreDisplay}</span>
         <span className="flex items-center gap-2">
           {anneeDisplay}
           {projet.enCours ? (

@@ -94,7 +94,7 @@ export default function Scramble({ text, delay = 0, step = 1, onView = false }: 
   return (
     <span ref={rootRef} className="relative block">
       <span aria-hidden="true" className="scramble-place">{text}</span>
-      <span ref={calqueRef} aria-hidden="true" className="absolute inset-0" />
+      <span ref={calqueRef} data-calque="" aria-hidden="true" className="calque-anime absolute inset-0" />
       <span className="sr-only">{text}</span>
     </span>
   )

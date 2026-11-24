@@ -28,6 +28,7 @@ export function brouiller(el: HTMLElement, montre: boolean, delay = 0, step = 1)
   const poser = () => {
     etat.affiche = cible
     calque.textContent = ''
+    calque.classList.remove('calque-anime')
     // Texte posé : c'est la vraie copie qui s'affiche (sélection et copier-coller normaux)
     if (montre) el.dataset.pose = ''
     else delete el.dataset.pose
@@ -37,6 +38,7 @@ export function brouiller(el: HTMLElement, montre: boolean, delay = 0, step = 1)
     return Promise.resolve()
   }
 
+  calque.classList.add('calque-anime') // couche propre, jetée dans poser() : pas de résidu dans Safari (globals.css)
   calque.textContent = depart
   delete el.dataset.pose
 

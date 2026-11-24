@@ -237,7 +237,7 @@ function ScrambleText({ text, revealed, delay = 0, step = 1, block = false }: {
     <span className={`relative ${block ? 'block' : 'inline-block'}`}>
       <span className="sr-only">{text}</span>
       <span aria-hidden="true" className="invisible">{text}</span>
-      <span aria-hidden="true" className="absolute inset-0">{display}</span>
+      <span data-calque="" aria-hidden="true" className={`absolute inset-0 ${display === text ? '' : 'calque-anime'}`}>{display}</span>
     </span>
   )
 }
