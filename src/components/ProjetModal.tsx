@@ -248,6 +248,7 @@ export default function ProjetModal({ projet, open, onClose }: { projet: Projet;
   useEffect(() => {
     if (!open) return
     dialogRef.current?.focus()
+    window.dispatchEvent(new Event('navbar:montrer')) // layout.tsx : navbar visible à l'ouverture et à la fermeture
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
     const prevOverflow = document.body.style.overflow
@@ -255,6 +256,7 @@ export default function ProjetModal({ projet, open, onClose }: { projet: Projet;
     return () => {
       window.removeEventListener('keydown', onKey)
       document.body.style.overflow = prevOverflow
+      window.dispatchEvent(new Event('navbar:montrer'))
     }
   }, [open, onClose])
 
