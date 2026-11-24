@@ -43,13 +43,8 @@ export default function AboutPage() {
           <div>
             <p className="py-2"><Scramble step={3} text="J'aime l'informatique et tout ce qui l'entoure depuis ma plus tendre enfance. Avant d'en faire mon métier, je suis passé par le droit, la philosophie, la psychologie et les arts plastiques, et c'est finalement sur une autre toile que je peins&nbsp;: le web." /></p>
             <p className="py-2"><Scramble step={3} text="Depuis 2024, j'ai travaillé sur des projets concrets, pendant mes formations, en entreprise et avec mes propres clients. J'y ai appris à voir un projet dans son ensemble, et à soigner aussi ce qui ne se voit pas, à commencer par la sécurité." /></p>
-            <p className="py-2"><Scramble step={3} text="Ce qui me plaît par-dessus tout, c'est d'apprendre de nouvelles manières de faire et de trouver la solution qui convient à chaque projet, plutôt que d'appliquer une recette." /></p>
-            <p className="py-2"><Scramble step={3} text="J'attache aussi de l'importance à ce qu'un site reste simple à utiliser, quels que soient l'écran et la personne qui le visite." /></p>
-            <p className="py-2"><Scramble step={3} text="J'habite à Strasbourg. Quand je ne code pas, je lis ou je regarde des films. Si vous cherchez une idée pour ce soir&nbsp;:" /></p>
-            <ul>
-              <li><Scramble delay={6} step={2} text="À voir&nbsp;: La grande bellezza, Paolo Sorrentino" /></li>
-              <li><Scramble delay={12} step={2} text="À lire&nbsp;: Normal People, Sally Rooney" /></li>
-            </ul>
+            <p className="py-2"><Scramble step={3} text="Ce qui me plaît par-dessus tout, c'est d'apprendre de nouvelles manières de faire et de trouver la solution qui convient à chaque projet, tout en la rendant accessible à tous." /></p>
+            <p className="py-2"><Scramble step={3} text="Sinon, j'habite à Strasbourg et quand je ne code pas, j'aime bien sortir, jouer à des jeux vidéo ou regarder des films. Si vous ne savez pas quoi regarder ce soir, je ne peux que vous recommander La grande bellezza de Paolo Sorrentino." /></p>
           </div>
         </section>
 

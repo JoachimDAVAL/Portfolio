@@ -6,16 +6,17 @@ import { useState, useEffect, useRef } from 'react'
 import { useTextScramble } from '@/hooks/useTextScramble'
 import Preloader, { IntroContext } from '@/components/Preloader'
 
-const hrefs = ['/about', '/projets', '/contact']
+const hrefs = ['/', '/about', '/projets', '/contact']
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   // ready : l'entrée (Preloader) est finie ou n'a pas lieu → la navbar et les pages lancent leurs animations
   const [ready, setReady] = useState(false)
 
-  const aboutDisplay   = useTextScramble('About',   ready)
-  const projetsDisplay = useTextScramble('Projets', ready, 4)
-  const contactDisplay = useTextScramble('Contact', ready, 8)
-  const displays = [aboutDisplay, projetsDisplay, contactDisplay]
+  const accueilDisplay = useTextScramble('Accueil', ready)
+  const aboutDisplay   = useTextScramble('About',   ready, 4)
+  const projetsDisplay = useTextScramble('Projets', ready, 8)
+  const contactDisplay = useTextScramble('Contact', ready, 12)
+  const displays = [accueilDisplay, aboutDisplay, projetsDisplay, contactDisplay]
 
   const pathname = usePathname()
   const activeIndex = hrefs.findIndex(href => href === pathname)
@@ -53,7 +54,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <IntroContext.Provider value={ready}>
       <Preloader onDone={() => setReady(true)} />
-      <nav ref={navRef} aria-label="Navigation principale" className={`fixed z-50 flex gap-5 top-0 left-0 w-full bg-[#141414] px-6 py-4 print:hidden ${barre}`}>
+      <nav ref={navRef} aria-label="Navigation principale" className={`fixed z-50 flex gap-5 top-0 left-0 w-full bg-[#141414] px-6 py-4 max-[374.98px]:px-[5vw] max-[374.98px]:gap-4 max-[374.98px]:text-sm print:hidden ${barre}`}>
         {hrefs.map((href, i) => (
           <Link
             key={href}

@@ -1,0 +1,124 @@
+/* Accueil en diapositives (page.tsx). Seuil « grand écran » : 64rem, comme lg: de Tailwind et GRAND dans moteur.ts */
+
+.accueil .cadre {
+  --frame-w: min(70vw, calc((90vh - 6rem) * 16 / 9 + 1rem));
+  --frame-h: min(75vh, calc(var(--frame-w) * 9 / 16 + 6rem));
+}
+
+/* ---------- Textes brouillés (Texte.tsx, moteur.ts) ---------- */
+/* Transparente et non masquée : la copie reste lue par les lecteurs d'écran */
+.accueil [data-place] { opacity: 0; }
+.accueil [data-pose] > [data-place] { opacity: 1; }
+.accueil [data-masquee] { visibility: hidden; }
+
+/* Éléments non textuels (photo, traits) : fondu pendant que le texte se brouille */
+.accueil .fade { transition: opacity 350ms ease-out; }
+.accueil .fade[data-sorti] { opacity: 0; }
+
+/* ---------- Progression ---------- */
+/* Piste invisible, remplie d'une part égale de sa longueur à chaque diapo */
+.accueil .progres {
+  position: absolute; top: 100%; left: 0; right: 0;
+  display: flex; justify-content: center;
+  height: calc((100vh - var(--frame-h)) / 2 - 3rem);
+  padding-block: 0.5rem;
+  pointer-events: none;
+}
+.accueil .progres > div { width: 1px; height: 100%; }
+.accueil .progres > div > div {
+  width: 100%; height: calc(var(--avance) * 100%);
+  background: currentColor;
+  transition: height 700ms cubic-bezier(0.22, 1, 0.36, 1), width 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (any-pointer: coarse), (width < 64rem) {
+  .accueil .progres {
+    position: fixed; top: auto; right: auto; left: 50%; bottom: 3.75rem; transform: translateX(-50%);
+    width: 6rem; height: 1px; padding: 0;
+  }
+  .accueil .progres > div { width: 100%; height: 1px; }
+  .accueil .progres > div > div { width: calc(var(--avance) * 100%); height: 100%; }
+}
+
+/* ---------- Pour qui : « détail des offres », détaché du tableau autant que la hauteur le permet ---------- */
+.cta-offres { margin-top: 0.5rem; }
+@media (width >= 64rem) { .cta-offres { margin-top: 1rem; } }
+@media (width >= 64rem) and (min-height: 800px) { .cta-offres { margin-top: 2rem; } }
+@media (width >= 64rem) and (max-height: 640px) { .cta-offres { margin-top: -0.5rem; } }
+
+/* ---------- Mobile et tablette portrait ---------- */
+@media (width < 64rem) {
+  /* Page bloquée à la hauteur de l'écran ; une diapo plus haute défile à l'intérieur */
+  html:has(.accueil), html:has(.accueil) body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  .accueil { height: 100dvh; overflow: hidden; }
+  .accueil .cadre { height: calc(100dvh - 8.5rem); margin-top: 0.5rem; }
+  .accueil .slide {
+    position: absolute; inset: 0;
+    overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none;
+    justify-content: safe center; align-content: safe center;
+    padding-block: 0.5rem;
+  }
+  .accueil .slide::-webkit-scrollbar { display: none; }
+  .accueil .progres { bottom: 3.25rem; }
+
+  /* Bonjour : photo pleine largeur derrière le titre et le sous-titre.
+     Le bloc texte passe en display: contents ; la photo couvre leurs rangées et prend la hauteur restante. */
+  #bonjour { grid-template-rows: minmax(11rem, 1fr); align-items: start; row-gap: 1.5rem; }
+  #bonjour > .bonjour-texte { display: contents; }
+  #bonjour > .bonjour-texte > * { position: relative; max-width: 36rem; }
+  #bonjour > .bonjour-photo { grid-area: 1 / 1 / 3 / 2; align-self: stretch; }
+  #bonjour > .bonjour-photo img { object-position: 50% 50%; }
+  /* Lisibilité du titre sur les parties claires de la photo */
+  #bonjour > .bonjour-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(20 20 20 / 0.6), rgb(20 20 20 / 0.45) 7.5rem, transparent 11rem); }
+  #bonjour h2 { grid-area: 1 / 1; align-self: end; }
+  #bonjour h2 + p { grid-area: 2 / 1; padding-bottom: 1rem; }
+
+  /* Pour qui : accordéon (PourQui.tsx) */
+  .acc-tete { padding: 0.875rem 0 0.5rem 0.125rem; }
+  .acc-btn { position: absolute; inset: 0; display: flex; align-items: center; justify-content: flex-end; padding: 0.875rem 0 0.5rem; cursor: pointer; }
+  .acc-prix { cursor: pointer; }
+  .acc-panel { display: grid; grid-template-rows: 1fr; transition: grid-template-rows 300ms ease-out, visibility 300ms; }
+  .acc-panel[data-ferme] { grid-template-rows: 0fr; visibility: hidden; }
+  /* Précision collée au prix quand la ligne est ouverte */
+  .acc-precision { transition: grid-template-rows 300ms ease-out, margin-top 300ms ease-out, visibility 300ms; }
+  .acc-precision:not([data-ferme]) { margin-top: -0.5rem; }
+  .acc-inner { min-height: 0; overflow: hidden; }
+  /* Signe + / moins dessiné (la police de titre n'est pas sûre pour ces caractères) */
+  .acc-sign { position: relative; flex: none; width: 0.75rem; height: 0.75rem; }
+  .acc-sign::before, .acc-sign::after { content: ''; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: currentColor; transition: transform 300ms ease-out; }
+  .acc-sign::after { transform: rotate(90deg); }
+  [aria-expanded="true"] > .acc-sign::after { transform: rotate(0deg); }
+}
+@media (width < 64rem) and (max-height: 700px) {
+  .acc-tete, .acc-btn { padding-block: 0.625rem 0.25rem; }
+  #pour-qui { gap: 1rem; }
+  /* Avis : resserré pour laisser de l'air au-dessus de la barre et de Scroll */
+  #avis { gap: 1rem; }
+  #avis h2 { font-size: 2.25rem; }
+  #avis .avis-liste figure { gap: 1rem; }
+}
+
+/* Très petits téléphones : le lien « on en parle ? » reste visible sans défiler */
+@media (width < 64rem) and (max-height: 600px) {
+  #hero { gap: 1rem; }
+}
+
+/* ---------- Moins de mouvement : textes posés, ni fondu ni accordéon animé ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .accueil [data-place] { opacity: 1; }
+  .accueil .fade, .accueil .progres > div > div, .acc-panel, .acc-precision, .acc-sign::before, .acc-sign::after { transition: none; }
+}
+
+/* ---------- Sans JavaScript et à l'impression : diapositives à la suite, tout est visible ---------- */
+@media print, (scripting: none) {
+  html:has(.accueil), html:has(.accueil) body { height: auto; overflow: visible; }
+  .accueil { height: auto !important; overflow: visible !important; padding-block: 5rem 3rem; }
+  .accueil .cadre { height: auto !important; display: flex; flex-direction: column; gap: 6rem; }
+  .accueil .slide { position: relative; inset: auto; overflow: visible; }
+  .accueil [data-masquee], .accueil .acc-panel[data-ferme] { visibility: visible; }
+  .accueil [data-place] { opacity: 1; }
+  .accueil [data-calque] { display: none; }
+  .accueil .acc-panel { grid-template-rows: 1fr !important; }
+  .accueil .fade[data-sorti] { opacity: 1; }
+  .accueil .avis-liste figure { grid-area: auto; }
+  .accueil .acc-btn, .accueil .progres, .accueil .bouton-scroll { display: none; }
+}
