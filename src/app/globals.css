@@ -3,6 +3,17 @@
 :root {
   --background: #141414;
   --foreground: rgb(226,206,202);
+  /* Marge du contenu : 5vw sous 1024 px ; au-dessus, marge du cadre des diapos et de la grid de /projets
+     (même calcul que --frame-w et --grid-w). --nav-top : hauteur de la navbar, centrée */
+  --marge: 5vw;
+  --nav-top: 1.25rem;
+}
+@media (width >= 64rem) {
+  :root { --marge: calc((100vw - min(70vw, calc((90vh - 6rem) * 16 / 9 + 1rem))) / 2); }
+}
+/* Écran peu haut : la grid de /projets monte presque jusqu'en haut, la navbar lui laisse la place */
+@media (width >= 64rem) and (max-height: 760px) {
+  :root { --nav-top: 0.25rem; }
 }
 
 @theme inline {

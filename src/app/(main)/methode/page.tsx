@@ -114,9 +114,9 @@ export default function MethodePage() {
   return (
     <div className="methode text-sm min-[1700px]:text-base">
 
-      {/* PDF : fixe en haut à droite, sur la ligne de la navbar, dès 768 px. Sur mobile la navbar est pleine :
+      {/* PDF : fixe en haut à droite, sur la ligne de la navbar, dès 1024 px (en dessous, la navbar centrée prend la place). Sur mobile la navbar est pleine :
           le lien est sous l'introduction. Un seul des deux est affiché. */}
-      <a href={PDF} download className="group hidden md:flex print:hidden gap-2 fixed z-50 top-0 right-1 lg:right-15 py-4 lg:pt-5 text-base">
+      <a href={PDF} download className="group hidden lg:flex print:hidden gap-2 fixed z-50 top-0 lg:right-15 xl:right-[calc(var(--marge)-1.25rem)] py-4 lg:pt-[var(--nav-top)] text-base">
         <EntreCrochets>Télécharger en PDF</EntreCrochets>
       </a>
 
@@ -134,7 +134,7 @@ export default function MethodePage() {
               <Scramble text="Methode et tarifs" />
             </h1>
             <p className="max-w-2xl leading-relaxed">Ce que je propose, comment on travaille ensemble et combien ça coûte. Les prix sont des points de départ, le montant exact est défini dans le devis, après notre premier échange.</p>
-            <a href={PDF} download className="group md:hidden print:hidden self-start -ml-5 flex gap-2 tracking-widest uppercase py-2">
+            <a href={PDF} download className="group lg:hidden print:hidden self-start -ml-5 flex gap-2 tracking-widest uppercase py-2">
               <EntreCrochets>télécharger en PDF</EntreCrochets>
             </a>
           </header>
