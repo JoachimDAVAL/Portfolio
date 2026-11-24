@@ -1,85 +1,76 @@
-'use client'
-
-import { useState } from 'react'
-import { useTextScramble } from '@/hooks/useTextScramble'
-import { useIntroReady } from '@/components/Preloader'
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import Scramble from '@/components/Scramble'
 import ContactForm from './ContactForm'
+import Email from './Email'
 
-const EMAIL = 'joachim.daval@proton.me'
+// Textes : vault, 01 PROJECTS/Portfolio/contenus/04-contact.md
+export const metadata: Metadata = {
+  title: 'Contact | Joachim Daval',
+  description: 'Un projet de site ? Écrivez à Joachim Daval, développeur et designer freelance à Strasbourg. Réponse sous 2 jours ouvrés.',
+}
 
-// Crochets au survol de la ligne (le group est sur le <li>, comme avant)
-const crochet = 'opacity-0 group-hover:opacity-100 transition-opacity duration-150'
+const crochet = 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-150'
+
+const liens = [
+  { nom: 'linkedin', href: 'https://www.linkedin.com/in/joachim-daval/', delay: 18 },
+  { nom: 'github', href: 'https://github.com/JoachimDAVAL', delay: 22 },
+]
 
 export default function ContactPage() {
-  const mounted = useIntroReady()
-
-  const [copie, setCopie] = useState(false)
-  const copierEmail = async () => {
-    try {
-      await navigator.clipboard.writeText(EMAIL)
-      setCopie(true)
-      setTimeout(() => setCopie(false), 2000)
-    } catch {
-      // presse-papiers indisponible (contexte non sécurisé…) : l'adresse reste sélectionnable
-    }
-  }
-
-  const titleDisplay = useTextScramble('Contact', mounted)
-  const line1Display = useTextScramble('Travaillons', mounted, 2)
-  const line2Display = useTextScramble('Ensemble.', mounted, 8)
-  const availDisplay = useTextScramble('Disponible pour des missions freelance et opportunités post-alternance (Octobre 2026)', mounted, 0, 3)
-  const emailDisplay    = useTextScramble('e-mail',         mounted, 5)
-  const githubDisplay   = useTextScramble('github',         mounted, 10)
-  const linkedinDisplay = useTextScramble('linkedin',       mounted, 15)
-  const cvDisplay       = useTextScramble('télécharger CV', mounted, 20)
-
   return (
-    <main className="flex items-center justify-center min-h-screen pt-24 pb-16 lg:py-16">
+    <main className="flex items-center justify-center min-h-screen pt-24 pb-16 text-pretty lg:py-16">
 
-      <video className="fixed inset-0 w-full h-full object-cover -z-10 opacity-30" autoPlay muted loop playsInline>
+      <video aria-hidden="true" className="fixed inset-0 w-full h-full object-cover -z-10 opacity-30" autoPlay muted loop playsInline>
         <source src="https://res.cloudinary.com/ln8fnpns/video/upload/v1789733407/contact.webm" type="video/webm" />
         <source src="https://res.cloudinary.com/ln8fnpns/video/upload/v1789733407/contact.mp4" type="video/mp4" />
       </video>
 
-      <section className="flex flex-col items-center gap-12 w-[90%] lg:w-[70vw] max-w-6xl">
-        <h1 className="font-title uppercase tracking-widest text-7xl md:text-8xl lg:text-9xl text-center">{titleDisplay}</h1>
+      <div className="flex flex-col items-center gap-8 lg:gap-12 w-[90%] lg:w-[70vw] max-w-6xl">
+        <h1 className="font-title uppercase tracking-widest text-5xl min-[375px]:text-6xl md:text-8xl lg:text-9xl text-center"><Scramble text="Contact" /></h1>
 
-        {/* Gauche : accroche + liens directs — Droite : formulaire. Mobile : le formulaire passe dessous. */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 w-full gap-16">
+        {/* Ordre du HTML = ordre du téléphone. Ordinateur : formulaire à droite sur les deux lignes, « Me retrouver » sous l'accroche */}
+        <div className="grid grid-cols-1 w-full gap-x-16 gap-y-10 lg:grid-cols-2 lg:grid-rows-[auto_1fr]">
 
-          {/* Colonne gauche : textes plafonnés à gauche, liens calés à droite (près du formulaire) */}
-          <div className="flex flex-col gap-10 w-full">
-            <p className="font-title uppercase text-5xl lg:text-6xl max-w-md">
-              {line1Display} <br /> {line2Display}
+          <section aria-label="Présentation" className="flex flex-col gap-6 lg:gap-8">
+            <p className="font-title uppercase text-3xl min-[375px]:text-4xl md:text-5xl xl:text-6xl">
+              <span className="block"><Scramble text="Travaillons" delay={2} /></span>{' '}
+              <span className="block"><Scramble text="Ensemble." delay={8} /></span>
             </p>
-            <p className="text-sm min-[1700px]:text-base max-w-md">{availDisplay}</p>
+            <p className="text-sm min-[1700px]:text-base max-w-sm"><Scramble step={3} text="Parlez-moi de votre projet, même en quelques lignes. Je vous réponds sous 2&nbsp;jours ouvrés." /></p>
+            <Link
+              href="/methode"
+              className="group self-center flex gap-2 border border-current/60 hover:border-current focus-visible:border-current transition-colors px-3 py-3 tracking-widest uppercase text-sm min-[1700px]:text-base"
+            >
+              <span aria-hidden="true" className={crochet}>[</span>
+              <span><Scramble text="méthode et tarifs" delay={10} /></span>
+              <span aria-hidden="true" className={crochet}>]</span>
+            </Link>
+          </section>
 
-            {/* Largeur du contenu (bordures courtes) ; desktop : centrée dans la colonne */}
-            <ul className="self-start lg:self-center flex flex-col gap-4 text-sm min-[1700px]:text-base">
-              {/* E-mail : lien mailto + bouton copier (pour qui n'a pas de messagerie configurée) */}
-              <li className="group flex items-center justify-between gap-4 border-b border-current/30 pb-2">
-                <a href={`mailto:${EMAIL}`} className="flex justify-between w-full">
-                  <span className={crochet}>[</span>{emailDisplay}<span className={`${crochet} ml-auto`}>]</span>
-                </a>
-                <button
-                  type="button"
-                  onClick={copierEmail}
-                  className="shrink-0 text-xs tracking-widest uppercase opacity-60 hover:opacity-100 transition-opacity cursor-pointer"
-                >
-                  {copie ? 'copié' : 'copier'}
-                </button>
-                <span role="status" className="sr-only">{copie ? 'Adresse e-mail copiée' : ''}</span>
-              </li>
-              <li className="group flex justify-between border-b border-current/30 pb-2"><a href="https://github.com/JoachimDAVAL" target="_blank" rel="noopener noreferrer" className="flex justify-between w-full"><span className={crochet}>[</span>{githubDisplay}<span className={`${crochet} ml-auto`}>]</span></a></li>
-              <li className="group flex justify-between border-b border-current/30 pb-2"><a href="https://www.linkedin.com/in/joachim-daval/" target="_blank" rel="noopener noreferrer" className="flex justify-between w-full"><span className={crochet}>[</span>{linkedinDisplay}<span className={`${crochet} ml-auto`}>]</span></a></li>
-              <li className="group flex justify-between border-b border-current/30 pb-2"><a href="/DAVALjoachim_CV.pdf" download className="flex justify-between w-full"><span className={crochet}>[</span>{cvDisplay}<span className={`${crochet} ml-auto`}>]</span></a></li>
-            </ul>
+          <div className="lg:col-start-2 lg:row-start-1 lg:row-span-2">
+            <ContactForm />
           </div>
 
-          <ContactForm revealed={mounted} />
+          {/* Secondaire. Ordinateur : à droite de la colonne, calé sur le bas du formulaire */}
+          <section aria-labelledby="t-retrouver" className="flex flex-col gap-3 justify-self-center lg:col-start-1 lg:row-start-2 lg:self-end lg:justify-self-end lg:mr-[10%]">
+            <h2 id="t-retrouver" className="text-sm min-[1700px]:text-base tracking-widest uppercase opacity-70"><Scramble text="Me retrouver" delay={12} /></h2>
+            <ul className="self-start flex flex-col gap-1 text-base min-[1700px]:text-lg">
+              <li className="flex items-center gap-2"><Email /></li>
+              {liens.map(({ nom, href, delay }) => (
+                <li key={nom}>
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="group flex gap-2 -ml-[1.125rem] py-1 w-fit">
+                    <span aria-hidden="true" className={crochet}>[</span>
+                    <span><Scramble text={nom} delay={delay} /></span>
+                    <span aria-hidden="true" className={crochet}>]</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </section>
 
         </div>
-      </section>
+      </div>
 
     </main>
   )

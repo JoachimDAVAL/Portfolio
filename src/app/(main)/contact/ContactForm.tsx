@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { useTextScramble } from '@/hooks/useTextScramble'
+import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
+import Scramble from '@/components/Scramble'
 import { TYPES_DEMANDE, type ChampErreur } from '@/lib/contact'
 
 type Statut = 'idle' | 'envoi' | 'ok' | 'erreur'
@@ -11,34 +11,45 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const champ =
   'w-full bg-transparent border-b border-current/30 py-2 outline-none transition-colors ' +
   'focus:border-current aria-[invalid=true]:border-red-400 placeholder:text-current/30'
+// Téléphone, tablette : bordure légère et fond (lisible sur la vidéo) ; ordinateur : sans cadre
+const cadre = 'text-sm min-[1700px]:text-base border border-current/20 bg-background/85 p-6 lg:border-0 lg:bg-transparent lg:p-0'
+const crochet = 'opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100'
 const libelle = 'text-xs min-[1700px]:text-sm tracking-widest uppercase'
 
-// Libellé scramblé à l'arrivée sur la page (même effet que le reste du site)
-function Libelle({ htmlFor, text, delay, revealed, optionnel = false }: {
+// Libellé brouillé à l'arrivée sur la page (même effet que le reste du site)
+function Libelle({ id, htmlFor, text, delay, optionnel = false }: {
+  id?: string
   htmlFor?: string
   text: string
   delay: number
-  revealed: boolean
   optionnel?: boolean
 }) {
-  const display = useTextScramble(text, revealed, delay)
   const Tag = htmlFor ? 'label' : 'span'
   return (
-    <Tag htmlFor={htmlFor} className={libelle}>
-      <span className="sr-only">{text}</span>
-      <span aria-hidden="true">{display}</span>
-      {optionnel ? <span className="opacity-50 normal-case tracking-normal"> (facultatif)</span> : null}
+    <Tag id={id} htmlFor={htmlFor} className={libelle}>
+      <span className="inline-block"><Scramble text={text} delay={delay} /></span>
+      {optionnel ? <span className="opacity-60 normal-case tracking-normal"> (facultatif)</span> : null}
     </Tag>
   )
 }
 
-export default function ContactForm({ revealed }: { revealed: boolean }) {
+export default function ContactForm() {
   const [type, setType] = useState('')
   const [erreurs, setErreurs] = useState<Partial<Record<ChampErreur, string>>>({})
   const [statut, setStatut] = useState<Statut>('idle')
   const [messageErreur, setMessageErreur] = useState('')
   const debut = useRef(0)
   useEffect(() => { debut.current = Date.now() }, [])
+
+  // Message envoyé : le focus passe sur la confirmation (lue par les lecteurs d'écran) et elle remonte à l'écran
+  // si le formulaire était plus haut qu'elle (téléphone, tablette)
+  const confirmation = useRef<HTMLDivElement>(null)
+  const [hauteur, setHauteur] = useState(0)
+  useEffect(() => {
+    if (statut !== 'ok') return
+    confirmation.current?.focus({ preventScroll: true })
+    if (!window.matchMedia('(min-width: 1024px)').matches) confirmation.current?.scrollIntoView()
+  }, [statut])
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -81,6 +92,7 @@ export default function ContactForm({ revealed }: { revealed: boolean }) {
         setStatut('erreur')
         return
       }
+      setHauteur(form.offsetHeight)
       form.reset()
       setType('')
       setStatut('ok')
@@ -92,17 +104,27 @@ export default function ContactForm({ revealed }: { revealed: boolean }) {
 
   if (statut === 'ok') {
     return (
-      <div role="status" className="flex flex-col gap-6 text-sm min-[1700px]:text-base border border-current/20 p-6 lg:border-0 lg:p-0">
-        <p className="font-title uppercase tracking-widest text-3xl md:text-4xl">Message envoyé.</p>
-        <p>Merci, je reviens vers vous rapidement.</p>
+      // Ordinateur : garde la hauteur du formulaire, la page ne bouge pas
+      <div
+        ref={confirmation}
+        tabIndex={-1}
+        style={{ '--h': `${hauteur}px` } as CSSProperties}
+        className={`${cadre} flex flex-col gap-6 scroll-mt-20 outline-none lg:min-h-[var(--h)]`}
+      >
+        {/* Police de titre sans accents */}
+        <p className="font-title uppercase tracking-widest text-3xl md:text-4xl">
+          <span aria-hidden="true">Message envoye.</span>
+          <span className="sr-only">Message envoyé.</span>
+        </p>
+        <p>Merci, je vous réponds sous 2&nbsp;jours ouvrés.</p>
         <button
           type="button"
           onClick={() => { setStatut('idle'); debut.current = Date.now() }}
-          className="group self-start flex gap-2 text-xs tracking-widest uppercase cursor-pointer"
+          className="group self-start -ml-5 flex gap-2 text-xs tracking-widest uppercase cursor-pointer"
         >
-          <span className="opacity-0 transition-opacity duration-150 group-hover:opacity-100">[</span>
+          <span aria-hidden="true" className={crochet}>[</span>
           écrire un autre message
-          <span className="opacity-0 transition-opacity duration-150 group-hover:opacity-100">]</span>
+          <span aria-hidden="true" className={crochet}>]</span>
         </button>
       </div>
     )
@@ -112,10 +134,9 @@ export default function ContactForm({ revealed }: { revealed: boolean }) {
     erreurs[k] ? <p id={`${k}-erreur`} className="text-xs text-red-400">{erreurs[k]}</p> : null
 
   return (
-    // Mobile : bordure légère pour identifier le bloc comme un formulaire — Desktop : sans cadre
-    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-8 text-sm min-[1700px]:text-base border border-current/20 p-6 lg:border-0 lg:p-0">
+    <form onSubmit={onSubmit} noValidate className={`${cadre} flex flex-col gap-8`}>
       <div className="flex flex-col gap-1">
-        <Libelle htmlFor="nom" text="Nom" delay={6} revealed={revealed} />
+        <Libelle htmlFor="nom" text="Nom" delay={6} />
         <input
           id="nom" name="nom" type="text" autoComplete="name" maxLength={100} required
           aria-invalid={!!erreurs.nom} aria-describedby={erreurs.nom ? 'nom-erreur' : undefined}
@@ -125,7 +146,7 @@ export default function ContactForm({ revealed }: { revealed: boolean }) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Libelle htmlFor="email" text="E-mail" delay={10} revealed={revealed} />
+        <Libelle htmlFor="email" text="E-mail" delay={10} />
         <input
           id="email" name="email" type="email" autoComplete="email" maxLength={200} required
           aria-invalid={!!erreurs.email} aria-describedby={erreurs.email ? 'email-erreur' : undefined}
@@ -136,8 +157,8 @@ export default function ContactForm({ revealed }: { revealed: boolean }) {
 
       {/* Type de demande : choix unique facultatif, re-cliquer désélectionne */}
       <div className="flex flex-col gap-3" role="group" aria-labelledby="type-libelle">
-        <span id="type-libelle"><Libelle text="Type de demande" delay={14} revealed={revealed} optionnel /></span>
-        <div className="grid grid-cols-2 gap-x-4 gap-y-2 justify-items-start">
+        <Libelle id="type-libelle" text="Type de demande" delay={14} optionnel />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 justify-items-start">
           {TYPES_DEMANDE.map((t) => {
             const actif = type === t
             return (
@@ -146,11 +167,11 @@ export default function ContactForm({ revealed }: { revealed: boolean }) {
                 type="button"
                 aria-pressed={actif}
                 onClick={() => setType(actif ? '' : t)}
-                className={`group flex gap-1 text-left cursor-pointer transition-opacity ${actif ? 'opacity-100' : 'opacity-50 hover:opacity-100'}`}
+                className={`group flex gap-1 text-left cursor-pointer transition-opacity ${actif ? 'opacity-100' : 'opacity-75 hover:opacity-100'}`}
               >
-                <span className={actif ? 'opacity-100' : 'opacity-0'}>[</span>
+                <span aria-hidden="true" className={actif ? 'opacity-100' : 'opacity-0'}>[</span>
                 {t}
-                <span className={actif ? 'opacity-100' : 'opacity-0'}>]</span>
+                <span aria-hidden="true" className={actif ? 'opacity-100' : 'opacity-0'}>]</span>
               </button>
             )
           })}
@@ -158,7 +179,7 @@ export default function ContactForm({ revealed }: { revealed: boolean }) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <Libelle htmlFor="message" text="Message" delay={18} revealed={revealed} />
+        <Libelle htmlFor="message" text="Message" delay={18} />
         <textarea
           id="message" name="message" rows={5} maxLength={5000} required
           aria-invalid={!!erreurs.message} aria-describedby={erreurs.message ? 'message-erreur' : undefined}
@@ -177,17 +198,17 @@ export default function ContactForm({ revealed }: { revealed: boolean }) {
         <button
           type="submit"
           disabled={statut === 'envoi'}
-          className="group self-start flex gap-2 text-base lg:text-lg font-bold tracking-widest uppercase cursor-pointer disabled:cursor-wait disabled:opacity-50"
+          className="group self-start -ml-5 flex gap-2 text-base lg:text-lg font-bold tracking-widest uppercase cursor-pointer disabled:cursor-wait disabled:opacity-50"
         >
-          <span className="opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">[</span>
+          <span aria-hidden="true" className={crochet}>[</span>
           {statut === 'envoi' ? 'envoi…' : 'envoyer'}
-          <span className="opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">]</span>
+          <span aria-hidden="true" className={crochet}>]</span>
         </button>
 
         <p role="alert" className="text-xs text-red-400 empty:hidden">{statut === 'erreur' ? messageErreur : ''}</p>
 
-        <p className="text-xs opacity-60">
-          Vos données servent uniquement à vous répondre et ne sont transmises à personne.
+        <p className="text-xs opacity-70">
+          Vos données servent uniquement à vous répondre. Le message est acheminé par Brevo, un service d&apos;envoi d&apos;e-mails.
         </p>
       </div>
     </form>
