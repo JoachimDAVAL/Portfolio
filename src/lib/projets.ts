@@ -78,62 +78,15 @@ export const projets: Projet[] = [
       "Pour ce projet j'ai repensé intégralement l'identité du site, conçu un parcours de réservation directe, puis développé un thème WordPress sur mesure.",
       "Mais je suis allé plus loin qu'un simple site vitrine : j'ai aussi construit toute la mécanique en coulisses. Une base de données centralise désormais les clients et l'historique des réservations, les devis et contrats sont générés et envoyés automatiquement, et le suivi client passe par un CRM. Le propriétaire gère son activité en autonomie, depuis son téléphone, pour quelques euros par mois.",
     ],
-    image: '/images/projets/chalet-nature/card-flou.webp',
-    enCours: {},
+    image: '/images/projets/chalet-nature/card.webp',
+    lien: 'https://chaletnature.fr/',
     galerie: [
       { label: 'Avant', src: '/images/projets/chalet-nature/avant.webp' },
-      { label: 'Après', src: '/images/projets/chalet-nature/apres-flou.webp', flou: true },
+      { label: 'Après', src: '/images/projets/chalet-nature/accueil.webp' },
+      { label: 'Chalet', src: '/images/projets/chalet-nature/chalet.webp' },
+      { label: 'Réservation', src: '/images/projets/chalet-nature/reservation.webp' },
     ],
-  },
-  {
-    titre: 'Hoovie',
-    annee: '2025',
-    type: 'Web App',
-    interventions: ['Web Development'],
-    description: [
-      "Application de recherche de films. Projet pour m'initier au framework React. J'ai utilisé l'API TMDB pour récupérer les données nécessaires à l'affichage et implémenté un système de recherche avec filtres.",
-    ],
-    image: '/images/projets/hoovie/card.webp',
-    lien: 'https://hoovie.vercel.app/',
-    galerie: [
-      { label: 'Accueil', src: '/images/projets/hoovie/accueil.webp' },
-      { label: 'Fiche film', src: '/images/projets/hoovie/movie-detail.webp' },
-    ],
-  },
-  {
-    titre: 'BlablaBook',
-    annee: '2025',
-    type: 'Web App',
-    interventions: ['Web Development Fullstack'],
-    description: [
-      "BlablaBook est mon premier projet web que j'ai réalisé en équipe chez O'Clock et avec lequel j'ai obtenu mon titre professionnel Développeur Web et Web Mobile.",
-    ],
-    image: '/images/projets/blablabook/card.webp',
-    galerie: [
-      { label: 'Accueil', src: '/images/projets/blablabook/accueil.webp' },
-      { label: 'Recherche', src: '/images/projets/blablabook/recherche.webp' },
-      { label: 'Tableau de bord', src: '/images/projets/blablabook/dashboard.webp' },
-      { label: 'Tableau de bord — Avis', src: '/images/projets/blablabook/dashboard-avis.webp' },
-      { label: 'Tableau de bord — Profil', src: '/images/projets/blablabook/dashboard-profil.webp' },
-    ],
-  },
-  {
-    titre: 'Abstract',
-    annee: '2026',
-    type: 'Marketplace 3D',
-    interventions: ['Web Development Fullstack'],
-    description: [
-      "Abstract est une marketplace de modèles 3D, dans l'esprit de Sketchfab : les artistes y publient et vendent leurs créations, les acheteurs les manipulent en 3D avant de les télécharger, et un espace d'administration modère le contenu.",
-      "C'est mon projet de fin de formation chez ESTIAM, celui avec lequel j'ai obtenu le titre professionnel Concepteur Développeur d'Applications (Bac+4).",
-      "L'enjeu était avant tout la conception : j'ai modélisé la base de données et les parcours utilisateurs (MERISE, UML), développé une API NestJS entièrement testée, puis une application React avec visualiseur 3D, paiement Stripe et fichiers sources protégés. L'interface reste celle d'un projet d'étude : l'effort a porté sur la robustesse de l'ensemble, jusqu'à la mise en production.",
-    ],
-    image: '/images/projets/abstract/card.webp',
-    lien: 'https://cda-marketplace-3d-models.vercel.app/',
-    galerie: [
-      { label: 'Accueil', src: '/images/projets/abstract/accueil.webp' },
-      { label: 'Catalogue', src: '/images/projets/abstract/catalogue.webp' },
-      { label: 'Visualiseur 3D', src: '/images/projets/abstract/visualiseur-3d.webp' },
-    ],
+    galerieDefaut: 1,
   },
 ]
 
