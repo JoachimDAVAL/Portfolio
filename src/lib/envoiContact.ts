@@ -8,11 +8,15 @@ import { TYPES_DEMANDE } from './contact'
 //   CONTACT_TO     adresse qui reçoit les messages
 //   CONTACT_FROM   adresse expéditrice, déclarée comme expéditeur dans Brevo, ex. contact@joachimdaval.dev
 //                  (domaine authentifié dans Brevo via DNS → meilleure délivrabilité)
+//   TURNSTILE_SECRET_KEY  clé secrète du widget Turnstile (anti-robot) ; en dev, la route Next met la clé de test
 export type VariablesContact = {
   BREVO_API_KEY?: string
   CONTACT_TO?: string
   CONTACT_FROM?: string
+  TURNSTILE_SECRET_KEY?: string
 }
+
+export const IP_INCONNUE = 'inconnue'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const DELAI_MIN_MS = 3000 // un humain met plus de 3 s à remplir le formulaire
@@ -30,6 +34,27 @@ function limite(ip: string) {
   recents.push(now)
   envois.set(ip, recents)
   return false
+}
+
+// Vérifie auprès de Cloudflare le jeton obtenu par le navigateur (src/lib/turnstile.ts).
+// 'panne' : Cloudflare injoignable ou clé secrète refusée, le visiteur n'y est pour rien.
+async function verifierJeton(jeton: string, secret: string, ip: string): Promise<'ok' | 'refus' | 'panne'> {
+  if (!jeton || jeton.length > 2048) return 'refus'
+  try {
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret, response: jeton, ...(ip === IP_INCONNUE ? {} : { remoteip: ip }) }),
+    })
+    const json = (await res.json()) as { success?: boolean; 'error-codes'?: string[] }
+    if (json.success === true) return 'ok'
+    const codes = json['error-codes'] ?? []
+    console.error('[contact] Turnstile', res.status, codes.join(', '))
+    return codes.some((c) => c === 'internal-error' || c.endsWith('-input-secret')) ? 'panne' : 'refus'
+  } catch (e) {
+    console.error('[contact] Turnstile injoignable', e)
+    return 'panne'
+  }
 }
 
 const texte = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
@@ -66,14 +91,22 @@ export async function traiterContact(req: Request, variables: VariablesContact, 
     return Response.json({ error: "Trop d'envois rapprochés. Réessayez dans quelques minutes." }, { status: 429 })
   }
 
-  const { BREVO_API_KEY: apiKey, CONTACT_TO: to, CONTACT_FROM: from } = variables
-  if (!apiKey || !to || !from) {
+  const { BREVO_API_KEY: apiKey, CONTACT_TO: to, CONTACT_FROM: from, TURNSTILE_SECRET_KEY: secret } = variables
+  if (!apiKey || !to || !from || !secret) {
     // Noms seulement, jamais les valeurs
-    const absentes = Object.entries({ BREVO_API_KEY: apiKey, CONTACT_TO: to, CONTACT_FROM: from })
+    const absentes = Object.entries({ BREVO_API_KEY: apiKey, CONTACT_TO: to, CONTACT_FROM: from, TURNSTILE_SECRET_KEY: secret })
       .filter(([, valeur]) => !valeur)
       .map(([nomVariable]) => nomVariable)
     console.error('[contact] Variables manquantes :', absentes.join(', '))
     return Response.json({ error: "L'envoi est momentanément indisponible." }, { status: 500 })
+  }
+
+  const controle = await verifierJeton(texte(body.jeton), secret, ip)
+  if (controle === 'panne') {
+    return Response.json({ error: "L'envoi est momentanément indisponible. Réessayez ou écrivez-moi directement." }, { status: 503 })
+  }
+  if (controle === 'refus') {
+    return Response.json({ error: 'La vérification anti-robot a échoué. Réessayez ou écrivez-moi directement.' }, { status: 403 })
   }
 
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {

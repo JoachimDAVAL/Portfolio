@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import Scramble from '@/components/Scramble'
 import { TYPES_DEMANDE, type ChampErreur } from '@/lib/contact'
+import { chargerTurnstile, obtenirJeton } from '@/lib/turnstile'
 
 type Statut = 'idle' | 'envoi' | 'ok' | 'erreur'
 
@@ -38,6 +39,10 @@ export default function ContactForm() {
   const [erreurs, setErreurs] = useState<Partial<Record<ChampErreur, string>>>({})
   const [statut, setStatut] = useState<Statut>('idle')
   const [messageErreur, setMessageErreur] = useState('')
+  // Anti-robot : emplacement de la case, affichée seulement si Cloudflare a un doute
+  const anti = useRef<HTMLDivElement>(null)
+  const [aCocher, setACocher] = useState(false)
+  useEffect(() => { if (aCocher) anti.current?.scrollIntoView({ block: 'nearest' }) }, [aCocher])
   const debut = useRef(0)
   useEffect(() => { debut.current = Date.now() }, [])
 
@@ -79,11 +84,20 @@ export default function ContactForm() {
 
     setStatut('envoi')
     setMessageErreur('')
+    let jeton: string
+    try {
+      if (!anti.current) throw new Error('emplacement')
+      jeton = await obtenirJeton(anti.current, setACocher)
+    } catch {
+      setMessageErreur("La vérification anti-robot n'a pas abouti. Réessayez ou écrivez-moi directement.")
+      setStatut('erreur')
+      return
+    }
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(valeurs),
+        body: JSON.stringify({ ...valeurs, jeton }),
       })
       const json = await res.json().catch(() => ({}))
       if (!res.ok) {
@@ -134,7 +148,7 @@ export default function ContactForm() {
     erreurs[k] ? <p id={`${k}-erreur`} className="text-xs text-red-400">{erreurs[k]}</p> : null
 
   return (
-    <form onSubmit={onSubmit} noValidate className={`${cadre} flex flex-col gap-8`}>
+    <form onSubmit={onSubmit} onFocus={() => { chargerTurnstile().catch(() => {}) }} noValidate className={`${cadre} flex flex-col gap-8`}>
       <div className="flex flex-col gap-1">
         <Libelle htmlFor="nom" text="Nom" delay={6} />
         <input
@@ -204,6 +218,10 @@ export default function ContactForm() {
           {statut === 'envoi' ? 'envoi…' : 'envoyer'}
           <span aria-hidden="true" className={crochet}>]</span>
         </button>
+
+        {/* Sans case à cocher, l'emplacement ne prend pas de place (-mt-4 annule l'espacement) */}
+        <p role="status" className="text-xs empty:hidden">{aCocher ? 'Cochez la case pour envoyer votre message.' : ''}</p>
+        <div ref={anti} className={aCocher ? '' : '-mt-4'} />
 
         <p role="alert" className="text-xs text-red-400 empty:hidden">{statut === 'erreur' ? messageErreur : ''}</p>
 

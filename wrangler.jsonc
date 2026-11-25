@@ -2,7 +2,7 @@
   "name": "portfolio",
   "main": "worker/index.ts",
   "compatibility_date": "2026-10-01",
-  // Garde les variables saisies dans le tableau de bord Cloudflare (BREVO_API_KEY, CONTACT_TO, CONTACT_FROM)
+  // Garde les variables saisies dans le tableau de bord Cloudflare (BREVO_API_KEY, CONTACT_TO, CONTACT_FROM, TURNSTILE_SECRET_KEY)
   "keep_vars": true,
   // Seulement www.joachimdaval.dev : pas de copie du site sur workers.dev
   "workers_dev": false,
