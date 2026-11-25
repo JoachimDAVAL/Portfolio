@@ -1,19 +1,24 @@
-import { NextResponse } from 'next/server'
-import { TYPES_DEMANDE } from '@/lib/contact'
+import { TYPES_DEMANDE } from './contact'
 
+// Traitement du formulaire de contact, partagé entre la route Next (dev, Vercel) et le Worker Cloudflare (worker/index.ts).
 // Envoi du formulaire de contact via l'API transactionnelle Brevo (https://www.brevo.com, données hébergées dans l'UE),
 // sans dépendance : simple fetch.
-// Variables d'environnement (.env.local en dev, réglages du projet sur Vercel en prod) — toutes obligatoires :
+// Variables d'environnement (.env.local en dev, réglages de l'hébergeur en prod) — toutes obligatoires :
 //   BREVO_API_KEY  clé API Brevo (SMTP & API → Clés API)
 //   CONTACT_TO     adresse qui reçoit les messages
 //   CONTACT_FROM   adresse expéditrice, déclarée comme expéditeur dans Brevo, ex. contact@joachimdaval.dev
 //                  (domaine authentifié dans Brevo via DNS → meilleure délivrabilité)
+export type VariablesContact = {
+  BREVO_API_KEY?: string
+  CONTACT_TO?: string
+  CONTACT_FROM?: string
+}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const DELAI_MIN_MS = 3000 // un humain met plus de 3 s à remplir le formulaire
 
 // Limite d'envois par IP : 5 messages / 10 min. En mémoire → best effort (remis à zéro à chaque
-// démarrage d'instance serverless), suffisant pour freiner un script qui insiste.
+// démarrage d'instance), suffisant pour freiner un script qui insiste.
 const FENETRE_MS = 10 * 60 * 1000
 const MAX_ENVOIS = 5
 const envois = new Map<string, number[]>()
@@ -29,17 +34,17 @@ function limite(ip: string) {
 
 const texte = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
 
-export async function POST(req: Request) {
+export async function traiterContact(req: Request, variables: VariablesContact, ip: string): Promise<Response> {
   let body: Record<string, unknown>
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'Requête invalide.' }, { status: 400 })
+    return Response.json({ error: 'Requête invalide.' }, { status: 400 })
   }
 
   // Anti-spam silencieux : champ piège rempli ou envoi trop rapide → on répond "OK" sans rien envoyer
   if (texte(body.site) || typeof body.t !== 'number' || body.t < DELAI_MIN_MS) {
-    return NextResponse.json({ ok: true })
+    return Response.json({ ok: true })
   }
 
   const nom = texte(body.nom).replace(/\s+/g, ' ')
@@ -54,20 +59,17 @@ export async function POST(req: Request) {
   if (message.length < 10) erreurs.message = 'Votre message est un peu court.'
   if (message.length > 5000) erreurs.message = 'Votre message est trop long (5000 caractères max).'
   if (Object.keys(erreurs).length) {
-    return NextResponse.json({ error: 'Formulaire incomplet.', erreurs }, { status: 422 })
+    return Response.json({ error: 'Formulaire incomplet.', erreurs }, { status: 422 })
   }
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'inconnue'
   if (limite(ip)) {
-    return NextResponse.json({ error: "Trop d'envois rapprochés. Réessayez dans quelques minutes." }, { status: 429 })
+    return Response.json({ error: "Trop d'envois rapprochés. Réessayez dans quelques minutes." }, { status: 429 })
   }
 
-  const apiKey = process.env.BREVO_API_KEY
-  const to = process.env.CONTACT_TO
-  const from = process.env.CONTACT_FROM
+  const { BREVO_API_KEY: apiKey, CONTACT_TO: to, CONTACT_FROM: from } = variables
   if (!apiKey || !to || !from) {
     console.error('[contact] BREVO_API_KEY, CONTACT_TO ou CONTACT_FROM manquant')
-    return NextResponse.json({ error: "L'envoi est momentanément indisponible." }, { status: 500 })
+    return Response.json({ error: "L'envoi est momentanément indisponible." }, { status: 500 })
   }
 
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -84,8 +86,8 @@ export async function POST(req: Request) {
 
   if (!res.ok) {
     console.error('[contact] Brevo', res.status, await res.text())
-    return NextResponse.json({ error: "L'envoi a échoué. Réessayez ou écrivez-moi directement." }, { status: 502 })
+    return Response.json({ error: "L'envoi a échoué. Réessayez ou écrivez-moi directement." }, { status: 502 })
   }
 
-  return NextResponse.json({ ok: true })
+  return Response.json({ ok: true })
 }

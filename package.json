@@ -3,8 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/variantes.mjs",
     "dev": "next dev --turbopack",
+    "prebuild": "node scripts/variantes.mjs",
     "build": "next build --turbopack",
+    "prebuild:cloudflare": "node scripts/variantes.mjs",
+    "build:cloudflare": "EXPORT_STATIQUE=1 next build --turbopack",
     "start": "next start",
     "lint": "eslint"
   },

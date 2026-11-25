@@ -39,3 +39,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# images réduites (scripts/variantes.mjs)
+/public/images/**/*-384.webp
+/public/images/**/*-640.webp
+/public/images/**/*-1080.webp
+
+# cloudflare
+.wrangler
+.dev.vars*
