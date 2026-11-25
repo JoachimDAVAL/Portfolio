@@ -68,7 +68,11 @@ export async function traiterContact(req: Request, variables: VariablesContact, 
 
   const { BREVO_API_KEY: apiKey, CONTACT_TO: to, CONTACT_FROM: from } = variables
   if (!apiKey || !to || !from) {
-    console.error('[contact] BREVO_API_KEY, CONTACT_TO ou CONTACT_FROM manquant')
+    // Noms seulement, jamais les valeurs
+    const absentes = Object.entries({ BREVO_API_KEY: apiKey, CONTACT_TO: to, CONTACT_FROM: from })
+      .filter(([, valeur]) => !valeur)
+      .map(([nomVariable]) => nomVariable)
+    console.error('[contact] Variables manquantes :', absentes.join(', '))
     return Response.json({ error: "L'envoi est momentanément indisponible." }, { status: 500 })
   }
 
