@@ -14,8 +14,8 @@
   main { container-type: inline-size; text-wrap: pretty; } /* pretty : évite un mot seul en dernière ligne */
 
   /* Titres : police de titre, donc sans accents (aria-label = version accentuée) */
-  .titre { font-family: 'bd-palaktbau', sans-serif; @apply uppercase tracking-widest text-3xl md:text-4xl lg:text-5xl leading-none; }
-  .sous-titre { font-family: 'bd-palaktbau', sans-serif; @apply uppercase tracking-widest text-2xl md:text-3xl leading-[1.15] text-balance; }
+  .titre { font-family: 'bd-palaktbau', sans-serif; @apply uppercase tracking-widest text-[2.5rem] lg:text-5xl leading-none text-balance; }
+  .sous-titre { font-family: 'bd-palaktbau', sans-serif; @apply uppercase tracking-widest text-3xl leading-[1.15] text-balance; }
   .section { @apply flex flex-col gap-8 pt-20 lg:pt-28; scroll-margin-top: 6rem; }
 
   /* Lignes de prix : offre / délai / prix */

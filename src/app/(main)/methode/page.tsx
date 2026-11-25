@@ -130,7 +130,7 @@ export default function MethodePage() {
           {/* 1 · Introduction */}
           <header className="flex flex-col gap-6">
             <p className="entete hidden"><span>Joachim Daval, développeur freelance</span> <span>Tarifs à jour en {TARIFS_DATE}</span></p>
-            <h1 aria-label="Méthode et tarifs" className="font-title uppercase tracking-widest text-5xl md:text-6xl lg:text-7xl leading-none">
+            <h1 aria-label="Méthode et tarifs" className="font-title uppercase tracking-widest text-5xl min-[375px]:text-6xl lg:text-7xl leading-none">
               <Scramble text="Methode et tarifs" />
             </h1>
             <p className="max-w-2xl leading-relaxed">Ce que je propose, comment on travaille ensemble et combien ça coûte. Les prix sont des points de départ, le montant exact est défini dans le devis, après notre premier échange.</p>
